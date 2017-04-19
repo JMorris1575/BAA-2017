@@ -1,0 +1,11 @@
+I finally figured out how to correct the unresolved references problem I've been getting in PyCharm.
+
+This seems to happen when there is another folder within the project folder, such as src, that contains the actual
+program.  The solution seems to be:
+
+File > Settings > Project: [project_name] > Project Interpreter > ** click on gear button at right ** > More... >
+   **click on show paths for selected interpreter at bottom right** > ** click on plus sign at upper right ** >
+    ** browse to the actual location of your program **
+
+This adds the label "library root" to the location in the Project window (for instance src library root).
+

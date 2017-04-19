@@ -1,0 +1,1 @@
+qcollectiongenerator _build\qthelp\BAAProgress.qhcp
