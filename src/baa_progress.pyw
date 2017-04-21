@@ -13,44 +13,117 @@ from PyQt5.QtWidgets import *
 from ui_setup import BAA_Setup
 from ui_targets_dlg import EditTargetsDlg
 
+import pickle
+import os
+import time
+
 
 class MainWindow(QMainWindow, BAA_Setup):
+
+    # ToDo: Find out why PyQt5 Code Completion and recognition is not working
+    # ToDo: Add an action that separates data entry into a separate dialog box
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUI()
-        self.config = {}        # configuration dictionary used throughout the program
+        self.config = self.setDefaults()      # Establishes the structure of the configuration dictionary
+        """
+        The following section is for development purposes. By editing the configuration of baa_progress.pyw in 
+        PyCharm to include a "Script Parameter" of 'config' (without the quotes) one can change the structure of
+        the config file as it is written in config.cfg
+        """
+        if len(sys.argv) > 1:
+            configFile = open('config.cfg', 'rb')
+            temp_config = self.readConfig(configFile)
+            temp_config['targets']['set'] = True
+            self.writeConfig(temp_config)
+
         self.image = QImage(640, 480, QImage.Format_RGB32)
+
+        class TargetsNotSetError(Exception): pass
+
         try:
             configFile = None
-            configFile = open("config.cfg")
-            self.config = self.readConfig()
+            configFile = open('config.cfg', 'rb')
+            self.config = self.readConfig(configFile)
+            try:
+                if not self.config["targets"]["set"]:
+                    raise TargetsNotSetError('')
+
+            except TargetsNotSetError:
+                self.limitAccess()
 
         except FileNotFoundError:
-            self.pledgeLabel.setEnabled(False)
-            self.pledgeInput.setEnabled(False)
-            self.collectedLabel.setEnabled(False)
-            self.collectedInput.setEnabled(False)
-            self.familiesLabel.setEnabled(False)
-            self.familiesInput.setEnabled(False)
-            self.saveAction.setEnabled(False)
-            self.saveAsAction.setEnabled(False)
-            self.config = self.setDefaults()
-            self.drawWelcome()
+            self.limitAccess()
 
         finally:
             if configFile is not None:
                 configFile.close()
-                self.config = self.readConfig()
-                # set up drawing pens and brushes here?
 
-    def readConfig(self):
+        # set up drawing pens and brushes here?
+
+    def limitAccess(self):
         """
-        Reads the configuration information from config.cfg in the same directory as the program.
+        if the config.cfg file is not found or if the targets are not set, limit access to
+        the program's functions and draw the welcome screen
+        :return: 
+        """
+        self.pledgeLabel.setEnabled(False)
+        self.pledgeInput.setEnabled(False)
+        self.collectedLabel.setEnabled(False)
+        self.collectedInput.setEnabled(False)
+        self.familiesLabel.setEnabled(False)
+        self.familiesInput.setEnabled(False)
+        self.saveAction.setEnabled(False)
+        self.saveAsAction.setEnabled(False)
+        # self.config = self.setDefaults()
+        self.drawWelcome()
+
+    def readConfig(self, config_file):
+        """
+        Reads the configuration information from configFile
+        :return: a dictionary of configuration values
+        """
+        config = pickle.load(config_file)
+        self.config_changed = False
+        print("Temporary Section -- Configuration just read:")
+        print("config = ", config)
+
+        return config
+
+    def writeConfig(self, config):
+        """
+        Writes the configuration information from config to config.cfg in the same directory as the program.
+        :return: True if successful, otherwise, False
+        """
+        print("Temporary Section -- Info being written to config.cfg")
+        print("config = ", config)
+        f = None
+        f = open('config.cfg', 'wb')
+        try:
+            pickle.dump(config, f, pickle.HIGHEST_PROTOCOL)
+        except (EnvironmentError, pickle.PicklingError) as err:
+            print("{0}: saveProgramInfo error: {1}".format(
+                os.path.basename(sys.argv[0]), err))
+        finally:
+            #self.config_changed = False
+            if f is not None:
+                f.close()
+
+    def setDefaults(self):
+        """
+        Sets the defaults for the appearance, filename and location of the image produced by the program.
+        This routine is generally only run the first time the program is used unless the user wants to
+        restore the defaults through the settings dialog.
         :return: a dictionary of configuration values
         """
         config = {}
-
+        config["targets"] = {"set":False, "year":time.strftime('%Y'), "goal": 0, "families": 0}
+        config["type"] = ".png"
+        config["style"] = "3DHorizontal"
+        config["border"] = True
+        config["title"] = "Our Parish Response to"
+        self.config_changed = True
         return config
 
     def drawWelcome(self):
@@ -85,7 +158,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         print("Got to setTargets")
         dlg = EditTargetsDlg(self.config["targets"])
         if dlg.exec():
-            print("Got to dlg.exec")
+            self.config_changed = True
         else:
             print("Skipped dlg.exec")
 
@@ -102,7 +175,8 @@ class MainWindow(QMainWindow, BAA_Setup):
     def closeEvent(self, Event):
         print("Got to closeEvent")
         print("Save config.cfg if it has been changed. If it keeps current data, it will probably have been changed")
-        # conditional file saving goes here
+        if self.config_changed:
+            self.writeConfig(self.config)
         self.close()
 
     def settings(self):

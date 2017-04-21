@@ -29,12 +29,15 @@ class BAA_Setup():
         self.pledgeLabel.setAlignment(Qt.AlignRight)
         self.pledgeLabel.setSizePolicy(0, 0)
         self.pledgeLabel.setEnabled(False)
+        self.pledgeInput.textChanged.connect(self.test)
+
         self.collectedInput = QLineEdit()
         self.collectedInput.setAlignment(Qt.AlignRight)
         self.collectedInput.setMaximumWidth(125)
         self.collectedInput.setPlaceholderText("Enter amount collected")
         self.collectedLabel = QLabel("Collected: ")
         self.collectedLabel.setAlignment(Qt.AlignRight)
+
         self.familiesInput = QLineEdit()
         self.familiesInput.setAlignment(Qt.AlignRight)
         self.familiesInput.setMaximumWidth(125)
@@ -64,6 +67,11 @@ class BAA_Setup():
         toolbar = QToolBar(self)
         self.addToolBar(toolbar)
         self.setupBars(menubar, toolbar)
+
+    # Temp Section
+    def test(self):
+        print(self.pledgeInput.text())
+    # End of Temp Section
 
 
     def setupBars(self, menubar=None, toolbar=None):
@@ -143,20 +151,3 @@ class BAA_Setup():
             aboutAction.setToolTip("About: Learn about the BAA Thermometers program")
             aboutAction.triggered.connect(self.about)
             helpMenu.addAction(aboutAction)
-
-
-    def setDefaults(self):
-        """
-        Sets the defaults for the appearance, filename and location of the image produced by the program.
-        This routine is generally only run the first time the program is used unless the user wants to
-        restore the defaults through the settings dialog.
-        :return: a dictionary of configuration values
-        """
-        config = {}
-        config["targets"] = {"year":time.strftime('%Y'), "goal": 0, "families": 0}
-        config["type"] = ".png"
-        config["style"] = "3DHorizontal"
-        config["border"] = True
-        config["title"] = "Our Parish Response to"
-        return config
-
