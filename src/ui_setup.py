@@ -2,6 +2,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+import helperFunctions
+
 import time
 
 class BAA_Setup():
@@ -22,28 +24,36 @@ class BAA_Setup():
         wholeLayout.addWidget(self.drawingBoard)
 
         self.pledgeInput = QLineEdit()
+        self.pledgeInput.setObjectName("pledgeInput")
         self.pledgeInput.setAlignment(Qt.AlignRight)
         self.pledgeInput.setMaximumWidth(125)
         self.pledgeInput.setPlaceholderText("Enter amount pledged")
+        self.pledgeInput.setToolTip("Enter amount pledged with or without formatting.")
+        self.pledgeInput.setWhatsThis('Amount pledged can be entered either as plain digits: 1234.56\n' +
+                                      'or formatted as currency: $1,234.56')
         self.pledgeLabel = QLabel("Pledged: ")
         self.pledgeLabel.setAlignment(Qt.AlignRight)
         self.pledgeLabel.setSizePolicy(0, 0)
-        self.pledgeLabel.setEnabled(False)
-        self.pledgeInput.textChanged.connect(self.test)
+        self.pledgeInput.returnPressed.connect(self.moveFocus)
+        self.pledgeInput.editingFinished.connect(self.test)
 
         self.collectedInput = QLineEdit()
+        self.collectedInput.setObjectName('collectedInput')
         self.collectedInput.setAlignment(Qt.AlignRight)
         self.collectedInput.setMaximumWidth(125)
         self.collectedInput.setPlaceholderText("Enter amount collected")
         self.collectedLabel = QLabel("Collected: ")
         self.collectedLabel.setAlignment(Qt.AlignRight)
+        self.collectedInput.returnPressed.connect(self.moveFocus)
 
         self.familiesInput = QLineEdit()
+        self.familiesInput.setObjectName('familiesInput')
         self.familiesInput.setAlignment(Qt.AlignRight)
         self.familiesInput.setMaximumWidth(125)
         self.familiesInput.setPlaceholderText("Enter number of families")
         self.familiesLabel = QLabel("Families: ")
         self.familiesLabel.setAlignment(Qt.AlignRight)
+        self.familiesInput.returnPressed.connect(self.moveFocus)
 
         lowerLayout = QHBoxLayout(panel)
         lowerLayout.addWidget(self.pledgeLabel)
@@ -69,9 +79,27 @@ class BAA_Setup():
         self.setupBars(menubar, toolbar)
 
     # Temp Section
+    @pyqtSlot()
     def test(self):
-        print(self.pledgeInput.text())
+        print(helperFunctions.decimalFormat(helperFunctions.String2Num(self.pledgeInput.text()), 'dollars'))
+        print(self.sender().objectName())
     # End of Temp Section
+
+    @pyqtSlot()
+    def moveFocus(self):
+        if self.sender().objectName() == 'pledgeInput':
+            self.collectedInput.setFocus()
+            self.collectedInput.selectAll()
+        elif self.sender().objectName() == 'collectedInput':
+            self.familiesInput.setFocus()
+            self.familiesInput.selectAll()
+        elif self.sender().objectName() == 'familiesInput':
+            self.pledgeInput.setFocus()
+            self.pledgeInput.selectAll()
+        else:
+            print("Problem in moveFocus method")
+
+
 
 
     def setupBars(self, menubar=None, toolbar=None):

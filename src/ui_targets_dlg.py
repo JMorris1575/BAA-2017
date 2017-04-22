@@ -2,67 +2,18 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-# Module Level Functions--------------------------------------------------------
 
-def decimalFormat(n, mode=None):
-    ns = '{0:.2f}'.format(round(n*1.0, 2)) # ns = string rounded to 2 decimals
-    dPart = ns[-3:]     # save the decimal part
-    count=0
-    fs = ''
-    for char in ns[ns.find('.')-1::-1]:
-        fs = char + fs
-        count += 1
-        if count==3:
-            fs = ',' + fs
-            count = 0
-    if fs[0:1] == ',':
-        fs = fs[1:]
-    if mode == 'dollars':
-        fs = '$' + fs + dPart
-    elif mode == 'percent':
-        fs = fs + dPart + '%'
-    return fs
+class EditTargetsDlg(QDialog):
 
-def cleanNumber(inString):
-    outString = ""
-    for char in inString:
-        if char.isnumeric() or char == ".":
-            outString += char
-    return outString
-
-def String2Num(s):
-    numchar = '0123456789.'
-    s2 = ''
-    for char in s:
-        if char in numchar:
-            s2 += char
-    return(float(s2))
-
-def testForNumbers(nString, numType):
-    # tries to convert nString to the indicated numeric type
-    # and returns whether it was successful or not
-    clean = cleanNumber(nString)
-    validNumber = True
-    try:
-        if numType == 'float':
-            float(clean)
-        if numType == 'int':
-            int(clean)
-    except ValueError:
-        validNumber = False
-    return validNumber
-
-
-class TargetsDlgSetup(QDialog):
+    # ToDo: set focus to the yearEdit box upon entry
+    # ToDo: check to see if it gracefully handles all forms of user input
 
     def __init__(self, targets, parent=None):
-        super(TargetsDlgSetup, self).__init__(parent)
+        super(EditTargetsDlg, self).__init__(parent)
         self.targets = targets
         self.setup()
-        self.show()
 
     def setup(self):
-
         self.resize(260, 150)
 
         yearLabel = QLabel("Campaign Year:")
@@ -99,7 +50,7 @@ class TargetsDlgSetup(QDialog):
         familyBoxLayout.addWidget(self.familyEdit)
 
         dlgButtonBox = QDialogButtonBox(QDialogButtonBox.Cancel|QDialogButtonBox.Ok, Qt.Horizontal, self)
-        dlgButtonBox.accepted.connect(self.okClicked)
+        dlgButtonBox.accepted.connect(self.accept)
         dlgButtonBox.rejected.connect(self.reject)
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch()
@@ -112,20 +63,16 @@ class TargetsDlgSetup(QDialog):
         layout.addStretch()
         layout.addLayout(buttonLayout)
 
-    def okClicked(self):
-        """
-        This is where you can do some input checking
-        :return: 
-        """
+    def getTargets(self):
+        return self.targets
 
-        class YearError(Exception):
-            pass
+    def accept(self):
 
-        class GoalError(Exception):
-            pass
+        class YearError(Exception):pass
 
-        class FamiliesError(Exception):
-            pass
+        class GoalError(Exception):pass
+
+        class FamiliesError(Exception):pass
 
         year = self.yearEdit.text()
         goal = self.goalEdit.text()
@@ -175,79 +122,10 @@ class TargetsDlgSetup(QDialog):
             return
 
         self.targets['year'] = year
-        self.targets['goal'] = decimalFormat(float(cleanNumber(goal)), 'dollars')
-        self.targets['families'] = families
+        self.targets['goal'] = float(cleanNumber(goal))
+        self.targets['families'] = int(cleanNumber(families))
+        self.targets['set'] = True
 
-        self.accept()
-
-# End of TargetsDlgSetup -------------------------------------------------------
-
-
-class EditTargetsDlg(TargetsDlgSetup):
-
-    def __init__(self, targets, parent=None):
-        super(EditTargetsDlg, self).__init__(targets, parent)
-        self.targets = targets
-        # self.setupUi(self)
-        # self.connect(self.buttonBox, SIGNAL("accepted()"),
-        #              self, SLOT("self.accept()"))
-        # self.connect(self.buttonBox, SIGNAL("rejected()"),
-        #              self, SLOT("self.reject()"))
-
-        # if self.targets['year'] is not None:
-        #     self.yearSpinBox.setValue(int(self.targets['year']))
-        #     self.goalLineEdit.setText(self.targets['goal'])
-        #     self.totalFamiliesLineEdit.setText(self.targets['families'])
-        #
-        # self.yearSpinBox.setFocus()
-
-    def getTargets(self):
-        return self.targets
-
-    def accept(self):
-        class YearError(Exception):
-            pass
-
-        class GoalError(Exception):
-            pass
-
-        class FamiliesError(Exception):
-            pass
-
-        # year = str(self.yearSpinBox.value())
-        # goal = self.goalLineEdit.text()
-        # families = self.totalFamiliesLineEdit.text()
-        # try:
-        #     if len(goal) == 0:
-        #         raise GoalError('You must enter the target goal for this year.')
-        #     try:
-        #         testForNumbers(goal, 'float')
-        #     except ValueError:
-        #         raise GoalError('The goal must be a numeric value.')
-        #     if len(families) == 0:
-        #         raise FamiliesError('You must enter the number of families\n' +
-        #                             'in the parish.')
-        #     try:
-        #         testForNumbers(families, 'int')
-        #     except ValueError:
-        #         raise FamiliesError('The number of families must be\n' +
-        #                             'an integer.  Example: 1403')
-        # except GoalError as e:
-        #     QMessageBox.warning(self, "Goal Error", str(e))
-        #     self.goalLineEdit.selectAll()
-        #     self.goalLineEdit.setFocus()
-        #     return
-        # except FamiliesError as e:
-        #     QMessageBox.warning(self, "Families Error", str(e))
-        #     self.totalFamiliesLineEdit.selectAll()
-        #     self.totalFamiliesLineEdit.setFocus()
-        #     return
-        #
-        # self.targets['year'] = year
-        # self.targets['goal'] = decimalFormat(float(cleanNumber(goal)), 'dollars')
-        # self.targets['families'] = families
-        #
-        print("Hi!")
         QDialog.accept(self)
 
 # End of TargetsEditDlg Class---------------------------------------------------

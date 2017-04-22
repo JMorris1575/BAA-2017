@@ -20,8 +20,7 @@ import time
 
 class MainWindow(QMainWindow, BAA_Setup):
 
-    # ToDo: Find out why PyQt5 Code Completion and recognition is not working
-    # ToDo: Add an action that separates data entry into a separate dialog box
+    # ToDo: Add an action that separates data entry into a separate dialog box -- maybe
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -35,15 +34,18 @@ class MainWindow(QMainWindow, BAA_Setup):
         if len(sys.argv) > 1:
             configFile = open('config.cfg', 'rb')
             temp_config = self.readConfig(configFile)
-            temp_config['targets']['set'] = True
+            temp_config['current'] = {}
+            temp_config['current']['pledged'] = 0
+            temp_config['current']['collected'] = 0
+            temp_config['current']['families'] = 0
             self.writeConfig(temp_config)
 
         self.image = QImage(640, 480, QImage.Format_RGB32)
 
         class TargetsNotSetError(Exception): pass
 
+        configFile = None
         try:
-            configFile = None
             configFile = open('config.cfg', 'rb')
             self.config = self.readConfig(configFile)
             try:
@@ -118,7 +120,8 @@ class MainWindow(QMainWindow, BAA_Setup):
         :return: a dictionary of configuration values
         """
         config = {}
-        config["targets"] = {"set":False, "year":time.strftime('%Y'), "goal": 0, "families": 0}
+        config["targets"] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
+        config['current'] = {'pledged':0, 'collected':0, 'families':0}
         config["type"] = ".png"
         config["style"] = "3DHorizontal"
         config["border"] = True

@@ -9,3 +9,14 @@ File > Settings > Project: [project_name] > Project Interpreter > ** click on ge
 
 This adds the label "library root" to the location in the Project window (for instance src library root).
 
+-------------
+
+After cloning the project onto my laptop computer for vacation I was having trouble getting it to recognize PyQt's
+objects. It complained about PyQt5.QtCore and such not being resolved and/or not being listed in __init__.py. I finally
+deleted the .idea folder, opened it to make it a new project, set up the python interpreter and followed the
+instructions above and it finally worked.
+
+--------------
+
+
+
