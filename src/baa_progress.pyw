@@ -12,6 +12,9 @@ from PyQt5.QtWidgets import *
 
 from ui_setup import BAA_Setup
 from ui_targets_dlg import EditTargetsDlg
+from ui_current_dlg import EditCurrentValuesDlg
+
+import helperFunctions
 
 import pickle
 import os
@@ -20,11 +23,12 @@ import time
 
 class MainWindow(QMainWindow, BAA_Setup):
 
-    # ToDo: Add an action that separates data entry into a separate dialog box -- maybe
+    # ToDo: Make sure current values are checked for validity and saved in the config.cfg file
+    # ToDo: Update graphic every time either the targets or the current values change
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.setupUI()
+        self.setupUI(self)
         self.config = self.setDefaults()      # Establishes the structure of the configuration dictionary
         """
         The following section is for development purposes. By editing the configuration of baa_progress.pyw in 
@@ -165,6 +169,40 @@ class MainWindow(QMainWindow, BAA_Setup):
         else:
             print("Skipped dlg.exec")
 
+    def setCurrent(self):
+        print("Got to setCurrent")
+        dlg = EditCurrentValuesDlg(self.config['current'])
+        if dlg.exec():
+            self.config_changed = True
+        else:
+            print("Skipped dlg.exec")
+
+    # def currentValuesChanged(self):
+    #     print('Got to moveFocus')
+    #     self.pledgeInput.blockSignals(True)
+    #     self.collectedInput.blockSignals(True)
+    #     self.familiesInput.blockSignals(True)
+    #     if self.sender().objectName() == 'pledgeInput':
+    #         self.pledgeInput.setText(
+    #             helperFunctions.decimalFormat(helperFunctions.String2Num(self.pledgeInput.text()), 'dollars')
+    #         )
+    #         self.collectedInput.setFocus()
+    #         self.collectedInput.selectAll()
+    #     elif self.sender().objectName() == 'collectedInput':
+    #         self.collectedInput.setText(
+    #             helperFunctions.decimalFormat(helperFunctions.String2Num(self.collectedInput.text()), 'dollars')
+    #         )
+    #         self.familiesInput.setFocus()
+    #         self.familiesInput.selectAll()
+    #     elif self.sender().objectName() == 'familiesInput':
+    #         self.familiesInput.setText(str(int(self.familiesInput.text())))
+    #         self.pledgeInput.setFocus()
+    #         self.pledgeInput.selectAll()
+    #     else:
+    #         print("Problem in moveFocus method")
+    #     self.pledgeInput.blockSignals(False)
+    #     self.collectedInput.blockSignals(False)
+    #     self.familiesInput.blockSignals(False)
 
     def saveImage(self):
         print("Got to saveImage")

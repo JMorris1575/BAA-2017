@@ -2,6 +2,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+import helperFunctions
+
 
 class EditTargetsDlg(QDialog):
 
@@ -29,7 +31,7 @@ class EditTargetsDlg(QDialog):
 
         goalLabel = QLabel("Campaign Goal:")
         self.goalEdit = QLineEdit()
-        self.goalEdit.setText(decimalFormat(self.targets["goal"], 'dollars'))
+        self.goalEdit.setText(helperFunctions.decimalFormat(self.targets["goal"], 'dollars'))
         self.goalEdit.setToolTip("Enter the parish goal for the Bishop's Annual Appeal.")
         self.goalEdit.setWhatsThis("Set the goal for this year's Bishop's Annual Appeal. You may enter it formatted " +
                                    "as dollars and cents ($12,345.67) or simply enter the digits (12345.67).")
@@ -72,7 +74,7 @@ class EditTargetsDlg(QDialog):
 
         class GoalError(Exception):pass
 
-        class FamiliesError(Exception):pass
+        class FamilyError(Exception):pass
 
         year = self.yearEdit.text()
         goal = self.goalEdit.text()
@@ -83,24 +85,24 @@ class EditTargetsDlg(QDialog):
 
             if len(goal) == 0:
                 raise GoalError('You must enter the target goal for this year.')
-            if String2Num(goal) <= 0.0:
+            if helperFunctions.String2Num(goal) <= 0.0:
                 raise GoalError('The goal must be greater than zero.')
             try:
-                testForNumbers(goal, 'float')
+                helperFunctions.testForNumbers(goal, 'float')
             except ValueError:
                 raise GoalError('The goal must be a numeric value.')
 
             if len(families) == 0:
-                raise FamiliesError('You must enter the number of families\n' +
+                raise FamilyError('You must enter the number of families\n' +
                                     'in the parish.')
-            if int(String2Num(families)) <= 0:
-                raise FamiliesError('You must enter the number of families\n' +
+            if int(helperFunctions.String2Num(families)) <= 0:
+                raise FamilyError('You must enter the number of families\n' +
                                     'in the parish.')
 
             try:
-                testForNumbers(families, 'int')
+                helperFunctions.testForNumbers(families, 'int')
             except ValueError:
-                raise FamiliesError('The number of families must be\n' +
+                raise FamilyError('The number of families must be\n' +
                                     'an integer.  Example: 1403')
         except YearError as e:
             response = QMessageBox.question(self, "Year Error?", str(e))
@@ -115,15 +117,15 @@ class EditTargetsDlg(QDialog):
             self.goalEdit.selectAll()
             self.goalEdit.setFocus()
             return
-        except FamiliesError as e:
+        except FamilyError as e:
             QMessageBox.warning(self, "Families Error", str(e))
             self.familyEdit.selectAll()
             self.familyEdit.setFocus()
             return
 
         self.targets['year'] = year
-        self.targets['goal'] = float(cleanNumber(goal))
-        self.targets['families'] = int(cleanNumber(families))
+        self.targets['goal'] = float(helperFunctions.cleanNumber(goal))
+        self.targets['families'] = int(helperFunctions.cleanNumber(families))
         self.targets['set'] = True
 
         QDialog.accept(self)
