@@ -1,0 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+.gitignore
+.idea/BAA-2017.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/workspace.xml
+src/__pycache__/
+src/config.cfg
