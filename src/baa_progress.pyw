@@ -23,28 +23,31 @@ import time
 
 class MainWindow(QMainWindow, BAA_Setup):
 
-    # ToDo: Make sure current values are checked for validity and saved in the config.cfg file
+    # ToDo: Update formatting in targetEdit, pledgedEdit and collectedEdit when editing is finished
     # ToDo: Update graphic every time either the targets or the current values change
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUI(self)
-        self.config = self.setDefaults()      # Establishes the structure of the configuration dictionary
+        # self.config = self.setDefaults()      # Establishes the structure of the configuration dictionary
+
+# ----------------------------------------------------------------------------------------------------------------------
         """
         The following section is for development purposes. By editing the configuration of baa_progress.pyw in 
         PyCharm to include a "Script Parameter" of 'config' (without the quotes) one can change the structure of
         the config file as it is written in config.cfg
         """
         if len(sys.argv) > 1:
-            configFile = open('config.cfg', 'rb')
-            temp_config = self.readConfig(configFile)
-            temp_config['current'] = {}
-            temp_config['current']['pledged'] = 0
-            temp_config['current']['collected'] = 0
-            temp_config['current']['families'] = 0
+            # configFile = open('config.cfg', 'rb')
+            # temp_config = self.readConfig(configFile)
+            temp_config = self.setDefaults()
             self.writeConfig(temp_config)
+# ----------------------------------------------------------------------------------------------------------------------
 
         self.image = QImage(640, 480, QImage.Format_RGB32)
+        # self.pens = self.createPens()
+        # self.brushes = self.createFills()
+        # self.fonts = self.createFonts()
 
         class TargetsNotSetError(Exception): pass
 
@@ -60,13 +63,172 @@ class MainWindow(QMainWindow, BAA_Setup):
                 self.limitAccess()
 
         except FileNotFoundError:
+            self.config = self.setDefaults()
+            self.getSettings(self.config)
             self.limitAccess()
 
         finally:
             if configFile is not None:
                 configFile.close()
+                self.getSettings(self.config)
+                self.drawGraphic()
 
-        # set up drawing pens and brushes here?
+    def setDefaults(self):
+        """
+        Sets the defaults for the program.
+        This routine is generally only run the first time the program is used unless the user wants to
+        restore the defaults through the settings dialog.
+        :return: a dictionary of configuration values
+        """
+        config = {}
+        config["targets"] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
+        config['current'] = {'pledged':0, 'collected':0, 'families':0}
+        config["type"] = ".png"
+        config["style"] = "3DHorizontal"
+        config["border"] = True
+        config["title"] = "Our Parish Response to the"
+        config['penDefinitions'] = self.definePens()
+        config['brushDefinitions'] = self.defineFills()
+        # config['fontDefinitions'] = self.defineFonts()
+        self.config_changed = True
+        return config
+
+    def getSettings(self, config):
+        """
+        Uses the configuration dictionary, config, to create pens, brushes, fonts and other often needed objects
+        :param config: dictionary
+        :return: None
+        """
+        self.pens = self.createPens(config['penDefinitions'])
+        self.fills = self.createFills(config['brushDefinitions'])
+
+    def definePens(self):
+        """
+        Defines a dictionary of pens used in the program and to be saved in the config.cfg file. These pens can have
+        their attributes set by the user through the settings panel. They need to be actualized into a QPen after they
+        have been defined.
+        :return: a dictionary with keys for the definitions of the different pens used in the program
+        """
+        penDefinitions = {}
+        penDefinitions['no_pen'] = {'color':QColor(Qt.black), 'width':1, 'style':Qt.NoPen,
+                                    'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
+        penDefinitions['border_pen'] = {'color':QColor(Qt.black), 'width':2, 'style':Qt.SolidLine,
+                                        'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
+        return penDefinitions
+
+    def createPens(self, defs):
+        """
+        Creates a dictionary of the QPens used in the program from the given definitions (defs).
+        These pens can have their characteristics set by the user through the settings panel.
+        :return: a dictionary with keys for each of the different QPens used in the program
+        """
+        pens = {}
+        for penkey in defs.keys():
+            pendef = defs[penkey]
+            new_pen = QPen()
+            new_pen.setColor(pendef['color'])
+            new_pen.setWidth(pendef['width'])
+            new_pen.setStyle(pendef['style'])
+            new_pen.setCapStyle(pendef['cap'])
+            new_pen.setJoinStyle(pendef['join'])
+            pens[penkey] = new_pen
+
+        return pens
+
+    def defineFills(self):
+        """
+        Defines a dictionary of brushes used in the program and to be saved in the config.cfg file. These brushes can
+        have their attributes set by the user through the settings panel. They need to be actualized into QBrushes after
+        they have been defined.
+        :return: a dictionary with keys for the definitions of the different brushes used in the program
+        """
+        fillDefinitions = {}
+        fillDefinitions['white_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.white)}
+        fillDefinitions['black_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.black)}
+        fillDefinitions['gray_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.gray)}
+        fillDefinitions['gray_linear_gradient'] = {'style': Qt.LinearGradientPattern,
+                                                'colors': [[0.0, QColor(Qt.gray)],
+                                                           [0.3, QColor(Qt.white)],
+                                                           [1.0, QColor(Qt.black)]]}
+        fillDefinitions['gray_radial_gradient'] = {'style': Qt.RadialGradientPattern,
+                                               'colors': [[0.0, QColor(Qt.white)],
+                                                          [0.3, QColor(Qt.gray)],
+                                                          [1.0, QColor(Qt.black)]]}
+        fillDefinitions['red_linear_gradient'] = {'style': Qt.LinearGradientPattern,
+                                                  'colors': [[0.12, QColor(Qt.red)],
+                                                             [0.35, QColor(Qt.white)],
+                                                             [0.55, QColor(Qt.red)],
+                                                             [1.0, QColor(Qt.darkRed)]]}
+        fillDefinitions['red_radial_gradient'] = {'style': Qt.RadialGradientPattern,
+                                                  'colors': [[0.0, QColor(Qt.white)],
+                                                             [0.3, QColor(Qt.red)],
+                                                             [1.0, QColor(Qt.darkRed)]]}
+        fillDefinitions['green_linear_gradient'] = {'style': Qt.LinearGradientPattern,
+                                                  'colors': [[0.12, QColor(Qt.green)],
+                                                             [0.35, QColor(Qt.white)],
+                                                             [0.55, QColor(Qt.green)],
+                                                             [1.0, QColor(Qt.darkGreen)]]}
+        fillDefinitions['green_radial_gradient'] = {'style': Qt.RadialGradientPattern,
+                                                  'colors': [[0.0, QColor(Qt.white)],
+                                                             [0.3, QColor(Qt.green)],
+                                                             [1.0, QColor(Qt.darkGreen)]]}
+        fillDefinitions['blue_linear_gradient'] = {'style': Qt.LinearGradientPattern,
+                                                  'colors': [[0.12, QColor(Qt.blue)],
+                                                             [0.35, QColor(Qt.white)],
+                                                             [0.55, QColor(Qt.blue)],
+                                                             [1.0, QColor(Qt.darkBlue)]]}
+        fillDefinitions['blue_radial_gradient'] = {'style': Qt.RadialGradientPattern,
+                                                  'colors': [[0.0, QColor(Qt.white)],
+                                                             [0.3, QColor(Qt.blue)],
+                                                             [1.0, QColor(Qt.darkBlue)]]}
+
+
+        return fillDefinitions
+
+    def createFills(self, defs):
+        """
+        Creates a dictionary of the fill colors and styles used in the program from the given definitions (defs).
+        These can either be QBrushes or QGradients depending on their style and can have their characteristics set by
+        the user through the settings panel.
+        :return: a dictionary with keys for each of the different QBrushes and QGradients used in the program
+        """
+        fills = {}
+        for fillKey in defs.keys():
+            fillDef = defs[fillKey]
+            if fillDef['style'] == Qt.SolidPattern:
+                new_fill = QBrush()
+                new_fill.setStyle(Qt.SolidPattern)
+                new_fill.setColor(fillDef['color'])
+
+            elif fillDef['style'] == Qt.LinearGradientPattern:
+                gradient = QLinearGradient()
+                gradient.setStops(fillDef['colors'])
+                new_fill = gradient
+                #new_brush.setStyle(Qt.LinearGradientPattern)
+
+            elif fillDef['style'] == Qt.RadialGradientPattern:
+                gradient = QRadialGradient()
+                gradient.setStops(fillDef['colors'])
+                new_fill = gradient
+
+            else:
+                new_fill.setStyle(Qt.NoBrush)
+
+            fills[fillKey] = new_fill
+
+        return fills
+
+    def createFonts(self):
+        """
+        Creates a dictionary of the fonts used in the program. These fonts can have their characteristics set by
+        the user through the settings panel.
+        :return: a dictionary with keys for each of the different brushes used in the program
+        """
+        fonts = {}
+        fonts['headerFont'] = QFont('Arial', 24, QFont.Bold)
+        fonts['subheadingFont'] = QFont('Arial', 18)
+        fonts['infoFont'] = QFont('Arial', 12)
+        return fonts
 
     def limitAccess(self):
         """
@@ -74,15 +236,9 @@ class MainWindow(QMainWindow, BAA_Setup):
         the program's functions and draw the welcome screen
         :return: 
         """
-        self.pledgeLabel.setEnabled(False)
-        self.pledgeInput.setEnabled(False)
-        self.collectedLabel.setEnabled(False)
-        self.collectedInput.setEnabled(False)
-        self.familiesLabel.setEnabled(False)
-        self.familiesInput.setEnabled(False)
         self.saveAction.setEnabled(False)
         self.saveAsAction.setEnabled(False)
-        # self.config = self.setDefaults()
+        self.enterData.setEnabled(False)
         self.drawWelcome()
 
     def readConfig(self, config_file):
@@ -102,8 +258,11 @@ class MainWindow(QMainWindow, BAA_Setup):
         Writes the configuration information from config to config.cfg in the same directory as the program.
         :return: True if successful, otherwise, False
         """
-        print("Temporary Section -- Info being written to config.cfg")
+# ----------------------------------------------------------------------------------------------------------------------
+        # Temporary Section -- Info being written to config.cfg"
         print("config = ", config)
+# ----------------------------------------------------------------------------------------------------------------------
+
         f = None
         f = open('config.cfg', 'wb')
         try:
@@ -115,23 +274,6 @@ class MainWindow(QMainWindow, BAA_Setup):
             #self.config_changed = False
             if f is not None:
                 f.close()
-
-    def setDefaults(self):
-        """
-        Sets the defaults for the appearance, filename and location of the image produced by the program.
-        This routine is generally only run the first time the program is used unless the user wants to
-        restore the defaults through the settings dialog.
-        :return: a dictionary of configuration values
-        """
-        config = {}
-        config["targets"] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
-        config['current'] = {'pledged':0, 'collected':0, 'families':0}
-        config["type"] = ".png"
-        config["style"] = "3DHorizontal"
-        config["border"] = True
-        config["title"] = "Our Parish Response to"
-        self.config_changed = True
-        return config
 
     def drawWelcome(self):
         """
@@ -149,9 +291,10 @@ class MainWindow(QMainWindow, BAA_Setup):
         text = "Welcome to the Bishop's Annual Appeal "
         text += "Progress program!  Click the target "
         text += "in the toolbar above to set your "
-        text += "goal information then enter the "
-        text += "current data below and the program will "
-        text += "draw a graphic for the bulletin."
+        text += "goal information then click the "
+        text += "hand icon to enter the current data. "
+        text += "the program will draw a graphic for "
+        text += "the bulletin."
         textRect = painter.boundingRect(QRectF(0, 0, self.image.width() / 2, self.image.height() / 2),
                                         Qt.AlignLeft | Qt.TextWordWrap,
                                         text)
@@ -161,6 +304,51 @@ class MainWindow(QMainWindow, BAA_Setup):
         painter.drawText(textRect, text)
         self.drawingBoard.setPixmap(QPixmap.fromImage(self.image))
 
+    def drawGraphic(self):
+        """
+        Draws the graphic according to the current data and current settings
+        :return: None
+        """
+        painter = QPainter(self.image)
+        borderPen = self.pens['border_pen']
+        painter.setBrush(self.fills['white_brush'])
+        painter.setPen(borderPen)
+        print(self.image.width(), self.image.height())
+        for i in range(10):
+            painter.drawRect(i * 10, i * 10, self.image.width() - 2 * i * 10, self.image.height() - 2 * i * 10)
+        painter.setBrush(self.fills['gray_brush'])
+        painter.drawEllipse(320, 240, 50, 50)
+        gradient = self.fills['gray_linear_gradient']
+        gradient.setStart(0, 120)
+        gradient.setFinalStop(0, 170)
+        painter.setBrush(gradient)
+        painter.setPen(self.pens['no_pen'])
+        painter.drawRect(200, 120, 150, 50)
+
+        gradient = self.fills['blue_linear_gradient']
+        gradient.setStart(0, 60)
+        gradient.setFinalStop(0, 160)
+        painter.setBrush(gradient)
+        painter.drawRect(400, 60, 100, 100)
+
+        gradient = self.fills['gray_radial_gradient']
+        gradient.setCenter(QPointF(200, 135))
+        gradient.setRadius(36)
+        gradient.setFocalPoint(QPointF(200,135))
+        painter.setBrush(gradient)
+        painter.drawChord(QRectF(175,120,50,50), 16*90, 16*180)
+
+        gradient = self.fills['blue_radial_gradient']
+        gradient.setCenter(QPointF(400, 90))
+        gradient.setRadius(72)
+        gradient.setFocalPoint(QPointF(400, 95))
+        painter.setBrush(gradient)
+        painter.drawChord(QRectF(350, 60, 100, 100), 16*90, 16*180)
+
+        self.drawingBoard.setPixmap(QPixmap.fromImage(self.image))
+
+
+
     def setTargets(self):
         print("Got to setTargets")
         dlg = EditTargetsDlg(self.config["targets"])
@@ -168,6 +356,7 @@ class MainWindow(QMainWindow, BAA_Setup):
             self.config_changed = True
         else:
             print("Skipped dlg.exec")
+        self.drawGraphic()
 
     def setCurrent(self):
         print("Got to setCurrent")
@@ -176,33 +365,7 @@ class MainWindow(QMainWindow, BAA_Setup):
             self.config_changed = True
         else:
             print("Skipped dlg.exec")
-
-    # def currentValuesChanged(self):
-    #     print('Got to moveFocus')
-    #     self.pledgeInput.blockSignals(True)
-    #     self.collectedInput.blockSignals(True)
-    #     self.familiesInput.blockSignals(True)
-    #     if self.sender().objectName() == 'pledgeInput':
-    #         self.pledgeInput.setText(
-    #             helperFunctions.decimalFormat(helperFunctions.String2Num(self.pledgeInput.text()), 'dollars')
-    #         )
-    #         self.collectedInput.setFocus()
-    #         self.collectedInput.selectAll()
-    #     elif self.sender().objectName() == 'collectedInput':
-    #         self.collectedInput.setText(
-    #             helperFunctions.decimalFormat(helperFunctions.String2Num(self.collectedInput.text()), 'dollars')
-    #         )
-    #         self.familiesInput.setFocus()
-    #         self.familiesInput.selectAll()
-    #     elif self.sender().objectName() == 'familiesInput':
-    #         self.familiesInput.setText(str(int(self.familiesInput.text())))
-    #         self.pledgeInput.setFocus()
-    #         self.pledgeInput.selectAll()
-    #     else:
-    #         print("Problem in moveFocus method")
-    #     self.pledgeInput.blockSignals(False)
-    #     self.collectedInput.blockSignals(False)
-    #     self.familiesInput.blockSignals(False)
+        self.drawGraphic()
 
     def saveImage(self):
         print("Got to saveImage")

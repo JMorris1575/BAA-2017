@@ -65,6 +65,9 @@ class EditTargetsDlg(QDialog):
         layout.addStretch()
         layout.addLayout(buttonLayout)
 
+        self.goalEdit.setFocus()
+        self.goalEdit.selectAll()
+
     def getTargets(self):
         return self.targets
 

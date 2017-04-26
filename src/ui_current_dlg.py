@@ -7,8 +7,6 @@ import helperFunctions
 
 class EditCurrentValuesDlg(QDialog):
 
-    # ToDo: check to see if it gracefully handles all forms of user input
-
     def __init__(self, current, parent=None):
         super(EditCurrentValuesDlg, self).__init__(parent)
         self.current = current
@@ -77,11 +75,11 @@ class EditCurrentValuesDlg(QDialog):
 
         class FamiliesError(Exception):pass
 
-        pledge = self.pledgeEdit.text()
+        pledged = self.pledgeEdit.text()
         collected = self.collectedEdit.text()
         families = self.familiesEdit.text()
         try:
-            if len(pledge) == 0:
+            if len(pledged) == 0:
                 raise PledgeError("Please enter a value for the current pledge.")
 
             if len(collected) == 0:
@@ -106,11 +104,11 @@ class EditCurrentValuesDlg(QDialog):
                                     'an integer.  Example: 1403')
         except PledgeError as e:
             response = QMessageBox.warning(self, "Pledge Error", str(e))
-            self.yearEdit.selectAll()
-            self.yearEdit.setFocus()
+            self.pledgeEdit.selectAll()
+            self.pledgeEdit.setFocus()
             return
         except CollectedError as e:
-            QMessageBox.warning(self, "Goal Error", str(e))
+            QMessageBox.warning(self, "Collected Error", str(e))
             self.collectedEdit.selectAll()
             self.collectedEdit.setFocus()
             return
@@ -120,7 +118,7 @@ class EditCurrentValuesDlg(QDialog):
             self.familiesEdit.setFocus()
             return
 
-        self.current['pledge'] = pledge
+        self.current['pledged'] = float(helperFunctions.cleanNumber(pledged))
         self.current['collected'] = float(helperFunctions.cleanNumber(collected))
         self.current['families'] = int(helperFunctions.cleanNumber(families))
 
