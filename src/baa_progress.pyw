@@ -28,7 +28,6 @@ class MainWindow(QMainWindow, BAA_Setup):
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.setupUI(self)
         # self.config = self.setDefaults()      # Establishes the structure of the configuration dictionary
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -44,33 +43,35 @@ class MainWindow(QMainWindow, BAA_Setup):
             self.writeConfig(temp_config)
 # ----------------------------------------------------------------------------------------------------------------------
 
-        self.image = QImage(640, 480, QImage.Format_RGB32)
-        # self.pens = self.createPens()
-        # self.brushes = self.createFills()
-        # self.fonts = self.createFonts()
 
         class TargetsNotSetError(Exception): pass
 
         configFile = None
+        limitAccess = False
         try:
             configFile = open('config.cfg', 'rb')
             self.config = self.readConfig(configFile)
+            self.getSettings(self.config)
             try:
                 if not self.config["targets"]["set"]:
                     raise TargetsNotSetError('')
 
             except TargetsNotSetError:
-                self.limitAccess()
+                limitAccess = True
 
         except FileNotFoundError:
             self.config = self.setDefaults()
             self.getSettings(self.config)
-            self.limitAccess()
+            limitAccess = True
 
         finally:
             if configFile is not None:
                 configFile.close()
-                self.getSettings(self.config)
+            self.setupUI(self)
+            if limitAccess:
+                self.limitAccess()
+                self.drawWelcome()
+            else:
                 self.drawGraphic()
 
     def setDefaults(self):
@@ -81,15 +82,19 @@ class MainWindow(QMainWindow, BAA_Setup):
         :return: a dictionary of configuration values
         """
         config = {}
-        config["targets"] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
+        config['imageSize'] = (640, 480)
+        config['imageBackground'] = QColor(Qt.white)
+        config['targets'] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
         config['current'] = {'pledged':0, 'collected':0, 'families':0}
-        config["type"] = ".png"
-        config["style"] = "3DHorizontal"
-        config["border"] = True
-        config["title"] = "Our Parish Response to the"
+        config['type'] = ".png"
+        config['style'] = "3DHorizontal"
+        config['displayColor'] = True
+        config['border'] = True
+        config['heading_prefix'] = "Our Parish Response to the"
+        config['heading'] = "Bishop's Annual Appeal"
         config['penDefinitions'] = self.definePens()
         config['brushDefinitions'] = self.defineFills()
-        # config['fontDefinitions'] = self.defineFonts()
+        config['fontDefinitions'] = self.defineFonts()
         self.config_changed = True
         return config
 
@@ -99,8 +104,10 @@ class MainWindow(QMainWindow, BAA_Setup):
         :param config: dictionary
         :return: None
         """
+        self.image = QImage(config['imageSize'][0], config['imageSize'][1], QImage.Format_RGB32)
         self.pens = self.createPens(config['penDefinitions'])
         self.fills = self.createFills(config['brushDefinitions'])
+        self.fonts = self.createFonts(config['fontDefinitions'])
 
     def definePens(self):
         """
@@ -114,6 +121,8 @@ class MainWindow(QMainWindow, BAA_Setup):
                                     'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
         penDefinitions['border_pen'] = {'color':QColor(Qt.black), 'width':2, 'style':Qt.SolidLine,
                                         'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
+        penDefinitions['outline_pen'] = {'color':QColor(Qt.black), 'width':1, 'style':Qt.SolidLine,
+                                         'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
         return penDefinitions
 
     def createPens(self, defs):
@@ -181,8 +190,6 @@ class MainWindow(QMainWindow, BAA_Setup):
                                                   'colors': [[0.0, QColor(Qt.white)],
                                                              [0.3, QColor(Qt.blue)],
                                                              [1.0, QColor(Qt.darkBlue)]]}
-
-
         return fillDefinitions
 
     def createFills(self, defs):
@@ -218,28 +225,53 @@ class MainWindow(QMainWindow, BAA_Setup):
 
         return fills
 
-    def createFonts(self):
+    def defineFonts(self):
         """
-        Creates a dictionary of the fonts used in the program. These fonts can have their characteristics set by
-        the user through the settings panel.
-        :return: a dictionary with keys for each of the different brushes used in the program
+        Defines a dictionary of QFonts used in the program and to be saved in the config.cfg file. These fonts can have
+        their attributes set by the user through the settings panel. They need to be actualized into a QFont after they
+        have been defined.
+        :return: a dictionary with keys for the definitions of the different fonts used in the program
+        """
+        fontDefinitions = {}
+        fontDefinitions['headingFont'] = {'fontName': 'Arial', 'size': 24, 'weight':QFont.Bold, 'italic':False}
+        fontDefinitions['captionFont'] = {'fontName': 'Arial', 'size': 16, 'weight':QFont.Normal, 'italic':False}
+        fontDefinitions['prefixFont'] = {'fontName':'Arial', 'size':18, 'weight':QFont.Normal, 'italic':False}
+        fontDefinitions['infoFont'] = {'fontName':'Arial', 'size':12, 'weight':QFont.Normal, 'italic':False}
+
+        return fontDefinitions
+
+    def createFonts(self, defs):
+        """
+        Creates a dictionary of the fonts used in the program from the definitions (defs). These fonts can have their
+        characteristics set by the user through the settings panel.
+        :return: a dictionary with keys for each of the different fonts used in the program
         """
         fonts = {}
-        fonts['headerFont'] = QFont('Arial', 24, QFont.Bold)
-        fonts['subheadingFont'] = QFont('Arial', 18)
-        fonts['infoFont'] = QFont('Arial', 12)
+        for fontKey in defs:
+            fontDef = defs[fontKey]
+            fonts[fontKey] = QFont(fontDef['fontName'], fontDef['size'], fontDef['weight'], fontDef['italic'])
         return fonts
 
     def limitAccess(self):
         """
         if the config.cfg file is not found or if the targets are not set, limit access to
         the program's functions and draw the welcome screen
-        :return: 
+        :return: None
         """
         self.saveAction.setEnabled(False)
         self.saveAsAction.setEnabled(False)
         self.enterData.setEnabled(False)
         self.drawWelcome()
+
+    def grantAccess(self):
+        """
+        Once the targets have been set, access to the program's functions can be granted
+        :return: None
+        """
+        self.saveAction.setEnabled(True)
+        self.saveAsAction.setEnabled(True)
+        self.enterData.setEnabled(True)
+
 
     def readConfig(self, config_file):
         """
@@ -289,12 +321,13 @@ class MainWindow(QMainWindow, BAA_Setup):
         painter.setFont(infoFont)
         painter.drawRect(0, 0, self.image.width() - 1, self.image.height() - 1)
         text = "Welcome to the Bishop's Annual Appeal "
-        text += "Progress program!  Click the target "
-        text += "in the toolbar above to set your "
-        text += "goal information then click the "
-        text += "hand icon to enter the current data. "
-        text += "the program will draw a graphic for "
-        text += "the bulletin."
+        text += "Progress program!  It will draw a "
+        text += "graphic indicating the parish's"
+        text += "current progress in the Appeal."
+        text += "Click the target in the toolbar "
+        text += "above to set your goal information, "
+        text += "then click the hand icon to enter "
+        text += "the current data."
         textRect = painter.boundingRect(QRectF(0, 0, self.image.width() / 2, self.image.height() / 2),
                                         Qt.AlignLeft | Qt.TextWordWrap,
                                         text)
@@ -306,54 +339,238 @@ class MainWindow(QMainWindow, BAA_Setup):
 
     def drawGraphic(self):
         """
-        Draws the graphic according to the current data and current settings
+        Draws the graphic according to the current data and current settings.
+        This method only creates the painter and draws the border, if any, the
+        heading and sub-heading then farms out the rest of the work to the 
+        methods for drawing the chosen style of indicator.
         :return: None
         """
         painter = QPainter(self.image)
-        borderPen = self.pens['border_pen']
-        painter.setBrush(self.fills['white_brush'])
-        painter.setPen(borderPen)
-        print(self.image.width(), self.image.height())
-        for i in range(10):
-            painter.drawRect(i * 10, i * 10, self.image.width() - 2 * i * 10, self.image.height() - 2 * i * 10)
-        painter.setBrush(self.fills['gray_brush'])
-        painter.drawEllipse(320, 240, 50, 50)
-        gradient = self.fills['gray_linear_gradient']
-        gradient.setStart(0, 120)
-        gradient.setFinalStop(0, 170)
-        painter.setBrush(gradient)
+        imageWidth = self.image.width()
+        imageHeight = self.image.height()
+        gap = 35        # used to set the vertical spacing between elements
+
+        # draw background
         painter.setPen(self.pens['no_pen'])
-        painter.drawRect(200, 120, 150, 50)
+        painter.setBrush(self.config['imageBackground'])
+        painter.drawRect(0, 0, imageWidth, imageHeight)
+        if self.config['border']:
+            painter.setPen(self.pens['border_pen'])
+            painter.pen().setWidth(10)
+            penWidth = painter.pen().width()
+            print('penWidth = ', penWidth)
+            painter.drawRect(0, 0, imageWidth-penWidth, imageHeight-penWidth)
 
-        gradient = self.fills['blue_linear_gradient']
-        gradient.setStart(0, 60)
-        gradient.setFinalStop(0, 160)
-        painter.setBrush(gradient)
-        painter.drawRect(400, 60, 100, 100)
+        # draw heading prefix
+        painter.setFont(self.fonts['prefixFont'])
+        textRect = painter.fontMetrics().boundingRect(self.config['heading_prefix'])
+        textWidth = textRect.width()
+        textHeight = textRect.height()
+        verticalPosition = imageHeight * (textHeight/imageHeight) - textHeight
+        drawRect = painter.boundingRect((imageWidth - textWidth)/2, verticalPosition, textWidth, textHeight,
+                                        Qt.AlignCenter, self.config['heading_prefix'])
+        painter.drawText(drawRect, Qt.AlignCenter, self.config['heading_prefix'])
+        verticalPosition += textHeight
 
-        gradient = self.fills['gray_radial_gradient']
-        gradient.setCenter(QPointF(200, 135))
-        gradient.setRadius(36)
-        gradient.setFocalPoint(QPointF(200,135))
-        painter.setBrush(gradient)
-        painter.drawChord(QRectF(175,120,50,50), 16*90, 16*180)
+        # draw heading
+        painter.setFont(self.fonts['headingFont'])
+        textRect = painter.fontMetrics().boundingRect(self.config['heading'])
+        drawRect = painter.boundingRect((imageWidth - textRect.width())/2, verticalPosition,
+                                        textRect.width(), textRect.height(),
+                                        Qt.AlignCenter, self.config['heading'])
+        painter.drawText(drawRect, Qt.AlignCenter, self.config['heading'])
+        verticalPosition += textRect.height()
 
-        gradient = self.fills['blue_radial_gradient']
-        gradient.setCenter(QPointF(400, 90))
-        gradient.setRadius(72)
-        gradient.setFocalPoint(QPointF(400, 95))
-        painter.setBrush(gradient)
-        painter.drawChord(QRectF(350, 60, 100, 100), 16*90, 16*180)
+        # draw target goal text
+        painter.setFont(self.fonts['captionFont'])
+        text = 'Target Goal: ' + helperFunctions.decimalFormat(self.config['targets']['goal'], 'dollars')
+        textRect = painter.fontMetrics().boundingRect(text)
+        drawRect = painter.boundingRect((imageWidth - textRect.width())/2, verticalPosition,
+                                        textRect.width(), textRect.height(),
+                                        Qt.AlignCenter, text)
+        painter.drawText(drawRect, Qt.AlignCenter, text)
+        verticalPosition += textRect.height() + gap     # save a little extra room after the headings
+
+        # draw current style of indicators
+        currentStyle = self.config['style']
+        if currentStyle == '2DHorizontal':
+            self.horizontalIndicators(painter, '2D', verticalPosition, gap)
+        elif currentStyle == '3DHorizontal':
+            self.horizontalIndicators(painter, '3D', verticalPosition, gap)
+        elif currentStyle == '2DVertical':
+            self.verticalIndicators(painter, '2D', verticalPosition, gap)
+        elif currentStyle == '3DVertical':
+            self.verticalIndicators(painter, '3D', verticalPosition, gap)
+        elif currentStyle == 'Guages':
+            self.guageIndicators(painter, verticalPosition, gap)
+        else:
+            msg = "Hmm... The program is calling for a style of display that it does not know how to draw."
+            msg += "That shouldn't have happened! Try renaming your config.cfg file, which is in the same directory"
+            msg += "as the program and then restart the program. You will have to re-enter the target information and"
+            msg += "current data and re-adjust the settings to your liking."
+            QMessageBox.critical(self, "Style Error", msg)
 
         self.drawingBoard.setPixmap(QPixmap.fromImage(self.image))
 
+    def horizontalIndicators(self, painter, style, verticalPosition, gap):
+        """
+        Draws all three horizontal indicators in vertical order: pledged, collected and families participating from top
+        to bottom according to the style selected in 'style'
+        :param style: a string, either '2D' or '3D' to control the style of the indicator
+        :return: None
+        """
+        gap = 35  # the amount of space between each indicator and its caption
+        drawingWidth = (self.image.width() - 10)
+        drawingHeight = (self.image.height() - verticalPosition) / 3 - gap
 
+        pledged = float(self.config['current']['pledged'])
+        pledgedString = helperFunctions.decimalFormat(pledged, 'dollars')
+        collected = float(self.config['current']['collected'])
+        collectedString = helperFunctions.decimalFormat(collected, 'dollars')
+        participatingFamilies = self.config['current']['families']
+        familiesString = str(participatingFamilies)
+        goal = float(self.config['targets']['goal'])
+        totalFamilies = self.config['targets']['families']
+        pledgePercent = int(pledged * 1000/goal + 0.5)/10
+        collectedPercent = int(collected * 1000/goal + 0.5)/10
+        familiesPercent = int(participatingFamilies * 1000/totalFamilies + 0.5)/10
+
+        pledgeModifier = ''
+        if pledgePercent == 100.0:
+            if pledged < goal: pledgeModifier = 'almost '
+            if pledged > goal: pledgeModifier = 'over '
+        pledgeCaption = 'Pledged: ' + pledgedString + ' = ' + pledgeModifier + str(pledgePercent) + '%'
+
+        collectedModifier = ''
+        if collectedPercent == 100.0:
+            if collected < goal: collectedModifier = 'almost '
+            if collected > goal: collectedModifier = 'over '
+        collectedCaption = 'Collected: ' + collectedString + ' = ' + collectedModifier + str(collectedPercent) + '%'
+
+        familiesModifier = ''
+        if familiesPercent == 100.0:
+            if participatingFamilies < totalFamilies: familiesModifier = 'almost '
+            if participatingFamilies > totalFamilies: familiesModifier =  'over '
+        familiesCaption = 'Participating Families: ' + familiesString + ' = ' + \
+                          familiesModifier + str(familiesPercent) + '%'
+
+        if self.config['displayColor']:
+            self.drawHorizontalIndicator(painter, style, 'red', pledgeCaption, pledgePercent,
+                                         verticalPosition, drawingWidth, drawingHeight)
+            verticalPosition += drawingHeight + gap
+
+            self.drawHorizontalIndicator(painter, style, 'green', collectedCaption, collectedPercent,
+                                         verticalPosition, drawingWidth, drawingHeight)
+            verticalPosition += drawingHeight + gap
+
+            self.drawHorizontalIndicator(painter, style, 'blue', familiesCaption, familiesPercent,
+                                          verticalPosition, drawingWidth, drawingHeight)
+        else:
+            self.drawHorizontalIndicator(painter, style, 'gray', pledgeCaption, pledgePercent,
+                                         verticalPosition, drawingWidth, drawingHeight)
+            verticalPosition += drawingHeight + gap
+
+            self.drawHorizontalIndicator(painter, style, 'gray', collectedCaption, collectedPercent,
+                                         verticalPosition, drawingWidth, drawingHeight)
+            verticalPosition += drawingHeight + gap
+
+            self.drawHorizontalIndicator(painter, style, 'gray', familiesCaption, familiesPercent,
+                                         verticalPosition, drawingWidth, drawingHeight)
+
+    def drawHorizontalIndicator(self, painter, style, color, caption, percent, startY, width, height):
+        """
+        Draws the current horizontal indicator with the given parameters
+        :param painter: the painter being used to draw
+        :param style: a string: '2D' or '3D'
+        :param color: currently a string 'red', 'green', 'blue' or 'gray' indicating the color of the indicator
+        :param caption: a string that will appear as the caption under the drawing
+        :param percent: an integer indicating the amount of the bar to fill in
+        :param vert: an integer indicating the vertical position
+        :param width: an integer indicating the width to draw the indicator
+        :param height: an integer indicating the height for the indicator and caption
+        :return: None
+        """
+        startX = self.image.width() / 10        # the horizontal starting point of the central rectangle
+        painter.setFont(self.fonts['captionFont'])
+        fontMetrics = painter. fontMetrics()
+        radius = (height - fontMetrics.height())/2
+        endX = self.image.width() - self.image.width()/10  # the horizontal end point of the central rectangle
+        startCapRect = QRectF(startX - radius, startY, 2 * radius, 2 * radius)
+        endCapRect = QRectF(endX - radius, startY, 2 * radius, 2 * radius)
+        centralRect = QRectF(startX, startY, percent * (endX - startX) / 100, 2 * radius)
+        captionRect = QRectF(startX, startY + 2 * radius + 10, endX - startX, fontMetrics.height())
+
+        if style == '2D':
+            brush1 = self.fills['black_brush']
+            brush2 = self.fills['black_brush']
+            brush3 = self.fills['gray_brush']
+
+        elif style == '3D':
+            if color == 'red':
+                gradient1 = self.fills['red_radial_gradient']
+                gradient2 = self.fills['red_linear_gradient']
+            elif color == 'green':
+                gradient1 = self.fills['green_radial_gradient']
+                gradient2 = self.fills['green_linear_gradient']
+            elif color == 'blue':
+                gradient1 = self.fills['blue_radial_gradient']
+                gradient2 = self.fills['blue_linear_gradient']
+            elif color == 'gray':
+                gradient1 = self.fills['gray_radial_gradient']
+                gradient2 = self.fills['gray_linear_gradient']
+            else:
+                msg = "There has been an unexpected error."
+                QMessageBox.critical(self, "Color Error", msg)
+
+            # set brushes to gradients
+            brush1 = gradient1
+            brush1.setCenter(startX, startY + radius)
+            brush1.setRadius(radius)
+            brush1.setFocalPoint(startX, startY + radius - 0.33 * radius)
+            brush2 = QRadialGradient(gradient1)
+            brush2.setCenter(endX, startY + radius)
+            brush2.setRadius(radius)
+            brush2.setFocalPoint(endX, startY + radius - 0.33 * radius)
+            brush3 = gradient2
+            brush3.setStart(startX, startY)
+            brush3.setFinalStop(startX, startY + 2 * radius)
+
+        # draw the indicator
+        # first the outline
+        painter.setPen(self.pens['outline_pen'])
+        painter.drawArc(startCapRect, 90 * 16, 180 * 16)
+        painter.drawLine(startX, startY, endX, startY)
+        painter.drawLine(startX, startY + 2* radius, endX, startY + 2* radius)
+        painter.drawArc(endCapRect, 90 * 16, -180 * 16)
+
+        # then the fill
+        painter.setBrush(brush1)
+        painter.setPen(self.pens['no_pen'])
+        painter.drawChord(startCapRect, 90 * 16, 180 * 16)
+        painter.setBrush(brush2)
+        painter.drawChord(endCapRect, 90 * 16, -180 * 16)
+        painter.setBrush(brush3)
+        painter.drawRect(centralRect)
+
+        # draw the caption
+        startY += centralRect.height() + 10
+        painter.setPen(self.pens['border_pen'])
+        drawRect = painter.boundingRect(captionRect, Qt.AlignCenter, caption)
+        painter.drawText(drawRect, Qt.AlignCenter, caption)
+
+
+    def verticalIndicators(self, painter, style, verticalPosition, gap):
+        print('Got to verticalIndicators() with style = ', style)
+
+    def guageIndicators(self, painter, verticalPosition, gap):
+        print('Got to guage indicators.')
 
     def setTargets(self):
         print("Got to setTargets")
         dlg = EditTargetsDlg(self.config["targets"])
         if dlg.exec():
             self.config_changed = True
+            self.grantAccess()
         else:
             print("Skipped dlg.exec")
         self.drawGraphic()
