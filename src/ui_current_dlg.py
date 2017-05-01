@@ -64,6 +64,9 @@ class EditCurrentValuesDlg(QDialog):
         layout.addStretch()
         layout.addLayout(buttonLayout)
 
+        self.pledgeEdit.setFocus()
+        self.pledgeEdit.selectAll()
+
     def getCurrent(self):
         return self.targets
 

@@ -37,10 +37,13 @@ class MainWindow(QMainWindow, BAA_Setup):
         the config file as it is written in config.cfg
         """
         if len(sys.argv) > 1:
-            # configFile = open('config.cfg', 'rb')
-            # temp_config = self.readConfig(configFile)
-            temp_config = self.setDefaults()
-            self.writeConfig(temp_config)
+            configFile = open('config.cfg', 'rb')
+            temp_config = self.readConfig(configFile)
+            configFile.close()
+            temp_config_two = self.setDefaults()
+            temp_config_two['targets'] = temp_config['targets']
+            temp_config_two['current'] = temp_config['current']
+            self.writeConfig(temp_config_two)
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -87,7 +90,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         config['targets'] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
         config['current'] = {'pledged':0, 'collected':0, 'families':0}
         config['type'] = ".png"
-        config['style'] = "3DHorizontal"
+        config['style'] = "3DVertical"
         config['displayColor'] = True
         config['border'] = True
         config['heading_prefix'] = "Our Parish Response to the"
@@ -235,6 +238,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         fontDefinitions = {}
         fontDefinitions['headingFont'] = {'fontName': 'Arial', 'size': 24, 'weight':QFont.Bold, 'italic':False}
         fontDefinitions['captionFont'] = {'fontName': 'Arial', 'size': 16, 'weight':QFont.Normal, 'italic':False}
+        fontDefinitions['smallCaptionFont'] = {'fontName': 'Arial', 'size': 12, 'weight':QFont.Normal, 'italic':False}
         fontDefinitions['prefixFont'] = {'fontName':'Arial', 'size':18, 'weight':QFont.Normal, 'italic':False}
         fontDefinitions['infoFont'] = {'fontName':'Arial', 'size':12, 'weight':QFont.Normal, 'italic':False}
 
@@ -290,11 +294,6 @@ class MainWindow(QMainWindow, BAA_Setup):
         Writes the configuration information from config to config.cfg in the same directory as the program.
         :return: True if successful, otherwise, False
         """
-# ----------------------------------------------------------------------------------------------------------------------
-        # Temporary Section -- Info being written to config.cfg"
-        print("config = ", config)
-# ----------------------------------------------------------------------------------------------------------------------
-
         f = None
         f = open('config.cfg', 'wb')
         try:
@@ -303,7 +302,6 @@ class MainWindow(QMainWindow, BAA_Setup):
             print("{0}: saveProgramInfo error: {1}".format(
                 os.path.basename(sys.argv[0]), err))
         finally:
-            #self.config_changed = False
             if f is not None:
                 f.close()
 
@@ -348,7 +346,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         painter = QPainter(self.image)
         imageWidth = self.image.width()
         imageHeight = self.image.height()
-        gap = 35        # used to set the vertical spacing between elements
+        # gap = 35        # used to set the vertical spacing between elements
 
         # draw background
         painter.setPen(self.pens['no_pen'])
@@ -389,20 +387,20 @@ class MainWindow(QMainWindow, BAA_Setup):
                                         textRect.width(), textRect.height(),
                                         Qt.AlignCenter, text)
         painter.drawText(drawRect, Qt.AlignCenter, text)
-        verticalPosition += textRect.height() + gap     # save a little extra room after the headings
+        verticalPosition += textRect.height()       # set to bottom of textRect, extra spacing added according to style
 
         # draw current style of indicators
         currentStyle = self.config['style']
         if currentStyle == '2DHorizontal':
-            self.horizontalIndicators(painter, '2D', verticalPosition, gap)
+            self.horizontalIndicators(painter, '2D', verticalPosition)
         elif currentStyle == '3DHorizontal':
-            self.horizontalIndicators(painter, '3D', verticalPosition, gap)
+            self.horizontalIndicators(painter, '3D', verticalPosition)
         elif currentStyle == '2DVertical':
-            self.verticalIndicators(painter, '2D', verticalPosition, gap)
+            self.verticalIndicators(painter, '2D', verticalPosition)
         elif currentStyle == '3DVertical':
-            self.verticalIndicators(painter, '3D', verticalPosition, gap)
+            self.verticalIndicators(painter, '3D', verticalPosition)
         elif currentStyle == 'Guages':
-            self.guageIndicators(painter, verticalPosition, gap)
+            self.guageIndicators(painter, verticalPosition)
         else:
             msg = "Hmm... The program is calling for a style of display that it does not know how to draw."
             msg += "That shouldn't have happened! Try renaming your config.cfg file, which is in the same directory"
@@ -412,16 +410,17 @@ class MainWindow(QMainWindow, BAA_Setup):
 
         self.drawingBoard.setPixmap(QPixmap.fromImage(self.image))
 
-    def horizontalIndicators(self, painter, style, verticalPosition, gap):
+    def horizontalIndicators(self, painter, style, verticalPosition):
         """
         Draws all three horizontal indicators in vertical order: pledged, collected and families participating from top
         to bottom according to the style selected in 'style'
         :param style: a string, either '2D' or '3D' to control the style of the indicator
         :return: None
         """
-        gap = 35  # the amount of space between each indicator and its caption
-        drawingWidth = (self.image.width() - 10)
-        drawingHeight = (self.image.height() - verticalPosition) / 3 - gap
+        gap = 35  # vertical spacing increment
+        verticalPosition += gap
+        drawingWidth = (self.image.width() - 2 * gap)       # gives a margin on each side equal to the gap
+        drawingHeight = (self.image.height() - verticalPosition - 3 * gap) / 3
 
         pledged = float(self.config['current']['pledged'])
         pledgedString = helperFunctions.decimalFormat(pledged, 'dollars')
@@ -490,11 +489,14 @@ class MainWindow(QMainWindow, BAA_Setup):
         :param height: an integer indicating the height for the indicator and caption
         :return: None
         """
-        startX = self.image.width() / 10        # the horizontal starting point of the central rectangle
+#        startX = (self.image.width() - width)/2
+#        startX = self.image.width() / 10        # the horizontal starting point of the central rectangle
         painter.setFont(self.fonts['captionFont'])
         fontMetrics = painter. fontMetrics()
         radius = (height - fontMetrics.height())/2
-        endX = self.image.width() - self.image.width()/10  # the horizontal end point of the central rectangle
+        startX = (self.image.width() - width)/2 + radius
+        endX = (self.image.width() + width)/2 - radius
+#        endX = self.image.width() - self.image.width()/10  # the horizontal end point of the central rectangle
         startCapRect = QRectF(startX - radius, startY, 2 * radius, 2 * radius)
         endCapRect = QRectF(endX - radius, startY, 2 * radius, 2 * radius)
         centralRect = QRectF(startX, startY, percent * (endX - startX) / 100, 2 * radius)
@@ -559,10 +561,167 @@ class MainWindow(QMainWindow, BAA_Setup):
         painter.drawText(drawRect, Qt.AlignCenter, caption)
 
 
-    def verticalIndicators(self, painter, style, verticalPosition, gap):
-        print('Got to verticalIndicators() with style = ', style)
+    def verticalIndicators(self, painter, style, verticalPosition):
+        # """
+        # Draws all three vertical indicators in horizontal order: pledged, collected and families participating from
+        # left to right according to the style selected in 'style'
+        # :param style: a string, either '2D' or '3D' to control the style of the indicator
+        # :return: None
+        # """
+        gap = 35  # horizontal and vertical spacing increment
+        verticalPosition += gap     # move down a little from the heading
+        drawingWidth = (self.image.width() - 4 * gap)/3       # since total image width = three images and four gaps
+        drawingHeight = (self.image.height() - verticalPosition) - gap  # saves space at the bottom too
 
-    def guageIndicators(self, painter, verticalPosition, gap):
+        # This part is all repeated from horizontal indicators above -- can be handled elsewhere -----------------------
+        goal = float(self.config['targets']['goal'])
+        pledged = float(self.config['current']['pledged'])
+        pledgedString = helperFunctions.decimalFormat(pledged, 'dollars')
+        collected = float(self.config['current']['collected'])
+        collectedString = helperFunctions.decimalFormat(collected, 'dollars')
+        totalFamilies = self.config['targets']['families']
+        participatingFamilies = self.config['current']['families']
+        familiesString = str(participatingFamilies) + ' of ' + str(totalFamilies)
+        pledgePercent = int(pledged * 1000/goal + 0.5)/10
+        collectedPercent = int(collected * 1000/goal + 0.5)/10
+        familiesPercent = int(participatingFamilies * 1000/totalFamilies + 0.5)/10
+
+        pledgeModifier = ''
+        if pledgePercent == 100.0:
+            if pledged < goal: pledgeModifier = 'almost '
+            if pledged > goal: pledgeModifier = 'over '
+        pledgeCaption = pledgedString + '\n' + 'Pledged\n' + pledgeModifier + '(' + str(pledgePercent) + '%)'
+
+        collectedModifier = ''
+        if collectedPercent == 100.0:
+            if collected < goal: collectedModifier = 'almost '
+            if collected > goal: collectedModifier = 'over '
+        collectedCaption = collectedString + ' \n' + 'Collected\n'  + '(' + collectedModifier \
+                           + str(collectedPercent) + '%)'
+
+        familiesModifier = ''
+        if familiesPercent == 100.0:
+            if participatingFamilies < totalFamilies: familiesModifier = 'almost '
+            if participatingFamilies > totalFamilies: familiesModifier =  'over '
+        familiesCaption = familiesString + '\n' + 'Families\n' + \
+                          '(' + familiesModifier + str(familiesPercent) + '%)'
+        # --------------------------------------------------------------------------------------------------------------
+
+        horizontalPosition = gap
+        if self.config['displayColor']:
+            self.drawVerticalIndicator(painter, style, 'red', pledgeCaption, pledgePercent,
+                                         horizontalPosition, verticalPosition, drawingWidth, drawingHeight)
+            horizontalPosition += drawingWidth + gap
+
+            self.drawVerticalIndicator(painter, style, 'green', collectedCaption, collectedPercent,
+                                         horizontalPosition, verticalPosition, drawingWidth, drawingHeight)
+            horizontalPosition += drawingWidth + gap
+
+            self.drawVerticalIndicator(painter, style, 'blue', familiesCaption, familiesPercent,
+                                          horizontalPosition, verticalPosition, drawingWidth, drawingHeight)
+        else:
+            self.drawVerticalIndicator(painter, style, 'gray', pledgeCaption, pledgePercent,
+                                         horizontalPosition, verticalPosition, drawingWidth, drawingHeight)
+            horizontalPosition += drawingWidth + gap
+
+            self.drawVerticalIndicator(painter, style, 'gray', collectedCaption, collectedPercent,
+                                         horizontalPosition, verticalPosition, drawingWidth, drawingHeight)
+            horizontalPosition += drawingHeight + gap
+
+            self.drawVerticalIndicator(painter, style, 'gray', familiesCaption, familiesPercent,
+                                         horizontalPosition, drawingWidth, drawingWidth, drawingHeight)
+
+    def drawVerticalIndicator(self, painter, style, color, caption, percent, startX, startY, width, height):
+        """
+        Draws the current horizontal indicator with the given parameters
+        :param painter: the painter being used to draw
+        :param style: a string: '2D' or '3D'
+        :param color: currently a string 'red', 'green', 'blue' or 'gray' indicating the color of the indicator
+        :param caption: a string that will appear as the caption under each drawing
+        :param percent: an integer indicating the amount of the bar to fill in
+        :param startY: an integer indicating the top of the drawings
+        :param width: an integer indicating the width of the containing rectangle
+        :param height: an integer indicating the height for the indicator and caption
+        :return: None
+        """
+        # startX = (self.image.width() - width) / 2
+        # #        startX = self.image.width() / 10        # the horizontal starting point of the central rectangle
+        painter.setFont(self.fonts['smallCaptionFont'])
+        fontMetrics = painter.fontMetrics()
+        captionHeight = fontMetrics.boundingRect(QRect(0, 0, 640, 480),  # text should fit easily within this QRect
+                                                 Qt.AlignHCenter,
+                                                 'M\nM\nM').height() + 10 # allows for 4-line families caption + 10 px
+        indicatorHeight = height - captionHeight
+        print('height, captionHeight, indicatorHeight) = ', '(' + str(height) + ', ' + str(captionHeight) + ', ' + str(indicatorHeight) + ')')
+        painter.drawLine(startX + width/2, startY, startX + width/2, startY + indicatorHeight)
+        # radius = (height - fontMetrics.height()) / 2
+        # endX = (self.image.width() + width) / 2
+        # #        endX = self.image.width() - self.image.width()/10  # the horizontal end point of the central rectangle
+        # startCapRect = QRectF(startX - radius, startY, 2 * radius, 2 * radius)
+        # endCapRect = QRectF(endX - radius, startY, 2 * radius, 2 * radius)
+        # centralRect = QRectF(startX, startY, percent * (endX - startX) / 100, 2 * radius)
+        # captionRect = QRectF(startX, startY + 2 * radius + 10, endX - startX, fontMetrics.height())
+        #
+        # if style == '2D':
+        #     brush1 = self.fills['black_brush']
+        #     brush2 = self.fills['black_brush']
+        #     brush3 = self.fills['gray_brush']
+        #
+        # elif style == '3D':
+        #     if color == 'red':
+        #         gradient1 = self.fills['red_radial_gradient']
+        #         gradient2 = self.fills['red_linear_gradient']
+        #     elif color == 'green':
+        #         gradient1 = self.fills['green_radial_gradient']
+        #         gradient2 = self.fills['green_linear_gradient']
+        #     elif color == 'blue':
+        #         gradient1 = self.fills['blue_radial_gradient']
+        #         gradient2 = self.fills['blue_linear_gradient']
+        #     elif color == 'gray':
+        #         gradient1 = self.fills['gray_radial_gradient']
+        #         gradient2 = self.fills['gray_linear_gradient']
+        #     else:
+        #         msg = "There has been an unexpected error."
+        #         QMessageBox.critical(self, "Color Error", msg)
+        #
+        #     # set brushes to gradients
+        #     brush1 = gradient1
+        #     brush1.setCenter(startX, startY + radius)
+        #     brush1.setRadius(radius)
+        #     brush1.setFocalPoint(startX, startY + radius - 0.33 * radius)
+        #     brush2 = QRadialGradient(gradient1)
+        #     brush2.setCenter(endX, startY + radius)
+        #     brush2.setRadius(radius)
+        #     brush2.setFocalPoint(endX, startY + radius - 0.33 * radius)
+        #     brush3 = gradient2
+        #     brush3.setStart(startX, startY)
+        #     brush3.setFinalStop(startX, startY + 2 * radius)
+        #
+        # # draw the indicator
+        # # first the outline
+        # painter.setPen(self.pens['outline_pen'])
+        # painter.drawArc(startCapRect, 90 * 16, 180 * 16)
+        # painter.drawLine(startX, startY, endX, startY)
+        # painter.drawLine(startX, startY + 2 * radius, endX, startY + 2 * radius)
+        # painter.drawArc(endCapRect, 90 * 16, -180 * 16)
+        #
+        # # then the fill
+        # painter.setBrush(brush1)
+        # painter.setPen(self.pens['no_pen'])
+        # painter.drawChord(startCapRect, 90 * 16, 180 * 16)
+        # painter.setBrush(brush2)
+        # painter.drawChord(endCapRect, 90 * 16, -180 * 16)
+        # painter.setBrush(brush3)
+        # painter.drawRect(centralRect)
+
+        # draw the caption
+        captionTop = startY + indicatorHeight
+        painter.setPen(self.pens['border_pen'])
+        captionRect = QRectF(startX, captionTop, width, captionHeight)
+        drawRect = painter.boundingRect(captionRect, Qt.AlignCenter, caption)
+        painter.drawText(drawRect, Qt.AlignCenter, caption)
+
+    def guageIndicators(self, painter, verticalPosition):
         print('Got to guage indicators.')
 
     def setTargets(self):
