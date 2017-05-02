@@ -422,34 +422,12 @@ class MainWindow(QMainWindow, BAA_Setup):
         drawingWidth = (self.image.width() - 2 * gap)       # gives a margin on each side equal to the gap
         drawingHeight = (self.image.height() - verticalPosition - 3 * gap) / 3
 
-        pledged = float(self.config['current']['pledged'])
-        pledgedString = helperFunctions.decimalFormat(pledged, 'dollars')
-        collected = float(self.config['current']['collected'])
-        collectedString = helperFunctions.decimalFormat(collected, 'dollars')
-        participatingFamilies = self.config['current']['families']
-        familiesString = str(participatingFamilies)
-        goal = float(self.config['targets']['goal'])
-        totalFamilies = self.config['targets']['families']
-        pledgePercent = int(pledged * 1000/goal + 0.5)/10
-        collectedPercent = int(collected * 1000/goal + 0.5)/10
-        familiesPercent = int(participatingFamilies * 1000/totalFamilies + 0.5)/10
-
-        pledgeModifier = ''
-        if pledgePercent == 100.0:
-            if pledged < goal: pledgeModifier = 'almost '
-            if pledged > goal: pledgeModifier = 'over '
+        values, percents, modifiers = self.getIndicatorInfo()
+        pledgedString, collectedString, familiesString = values
+        pledgePercent, collectedPercent, familiesPercent = percents
+        pledgeModifier, collectedModifier, familiesModifier = modifiers
         pledgeCaption = 'Pledged: ' + pledgedString + ' = ' + pledgeModifier + str(pledgePercent) + '%'
-
-        collectedModifier = ''
-        if collectedPercent == 100.0:
-            if collected < goal: collectedModifier = 'almost '
-            if collected > goal: collectedModifier = 'over '
         collectedCaption = 'Collected: ' + collectedString + ' = ' + collectedModifier + str(collectedPercent) + '%'
-
-        familiesModifier = ''
-        if familiesPercent == 100.0:
-            if participatingFamilies < totalFamilies: familiesModifier = 'almost '
-            if participatingFamilies > totalFamilies: familiesModifier =  'over '
         familiesCaption = 'Participating Families: ' + familiesString + ' = ' + \
                           familiesModifier + str(familiesPercent) + '%'
 
@@ -571,41 +549,17 @@ class MainWindow(QMainWindow, BAA_Setup):
         gap = 35  # horizontal and vertical spacing increment
         verticalPosition += gap     # move down a little from the heading
         drawingWidth = (self.image.width() - 4 * gap)/3       # since total image width = three images and four gaps
-        drawingHeight = (self.image.height() - verticalPosition) - gap  # saves space at the bottom too
+        drawingHeight = (self.image.height() - verticalPosition) - gap / 2  # saves a little space at the bottom too
 
-        # This part is all repeated from horizontal indicators above -- can be handled elsewhere -----------------------
-        goal = float(self.config['targets']['goal'])
-        pledged = float(self.config['current']['pledged'])
-        pledgedString = helperFunctions.decimalFormat(pledged, 'dollars')
-        collected = float(self.config['current']['collected'])
-        collectedString = helperFunctions.decimalFormat(collected, 'dollars')
-        totalFamilies = self.config['targets']['families']
-        participatingFamilies = self.config['current']['families']
-        familiesString = str(participatingFamilies) + ' of ' + str(totalFamilies)
-        pledgePercent = int(pledged * 1000/goal + 0.5)/10
-        collectedPercent = int(collected * 1000/goal + 0.5)/10
-        familiesPercent = int(participatingFamilies * 1000/totalFamilies + 0.5)/10
-
-        pledgeModifier = ''
-        if pledgePercent == 100.0:
-            if pledged < goal: pledgeModifier = 'almost '
-            if pledged > goal: pledgeModifier = 'over '
+        values, percents, modifiers = self.getIndicatorInfo()
+        pledgedString, collectedString, familiesString = values
+        pledgePercent, collectedPercent, familiesPercent = percents
+        pledgeModifier, collectedModifier, familiesModifier = modifiers
         pledgeCaption = pledgedString + '\n' + 'Pledged\n' + pledgeModifier + '(' + str(pledgePercent) + '%)'
-
-        collectedModifier = ''
-        if collectedPercent == 100.0:
-            if collected < goal: collectedModifier = 'almost '
-            if collected > goal: collectedModifier = 'over '
         collectedCaption = collectedString + ' \n' + 'Collected\n'  + '(' + collectedModifier \
                            + str(collectedPercent) + '%)'
-
-        familiesModifier = ''
-        if familiesPercent == 100.0:
-            if participatingFamilies < totalFamilies: familiesModifier = 'almost '
-            if participatingFamilies > totalFamilies: familiesModifier =  'over '
         familiesCaption = familiesString + '\n' + 'Families\n' + \
                           '(' + familiesModifier + str(familiesPercent) + '%)'
-        # --------------------------------------------------------------------------------------------------------------
 
         horizontalPosition = gap
         if self.config['displayColor']:
@@ -652,8 +606,39 @@ class MainWindow(QMainWindow, BAA_Setup):
                                                  Qt.AlignHCenter,
                                                  'M\nM\nM').height() + 10 # allows for 4-line families caption + 10 px
         indicatorHeight = height - captionHeight
-        print('height, captionHeight, indicatorHeight) = ', '(' + str(height) + ', ' + str(captionHeight) + ', ' + str(indicatorHeight) + ')')
-        painter.drawLine(startX + width/2, startY, startX + width/2, startY + indicatorHeight)
+        radius = indicatorHeight / 10
+        bulbRectF = QRectF(startX + width / 2 - radius, startY + indicatorHeight - 2 * radius, 2 * radius, 2 * radius)
+
+        if style == '2D':
+            bulbBrush = self.fills('black_brush')
+            mercuryBrush = self.fills('gray_brush')
+        elif style == '3D':
+            if color == 'red':
+                bulbGradient = self.fills['red_radial_gradient']
+                mercuryGradient = self.fills['red_linear_gradient']
+            if color == 'green':
+                bulbGradient = self.fills['green_radial_gradient']
+                mercuryGradient = self.fills['green_linear_gradient']
+            if color == 'blue':
+                bulbGradient = self.fills['blue_radial_gradient']
+                mercuryGradient = self.fills['blue_linear_gradient']
+            if color == 'gray':
+                bulbGradient = self.fills['gray_radial_gradient']
+                mercuryGradient = self.fills['gray_linear_gradient']
+
+            # set 3D brushes to gradients
+            bulbBrush = bulbGradient
+            bulbBrush.setCenter(startX + width / 2, startY + indicatorHeight - radius)
+            bulbBrush.setFocalPoint(startX + width / 4, startY + indicatorHeight - 1.5 * radius)
+            mercuryBrush = mercuryGradient
+            # do more work later
+
+        # draw the indicator
+        # first the outline
+        painter.setPen(self.pens['outline_pen'])
+        painter.drawArc(bulbRectF, 60 * 16, -300 * 16)
+        # painter.drawLine(startX + width/2, startY, startX + width/2, startY + indicatorHeight)
+
         # radius = (height - fontMetrics.height()) / 2
         # endX = (self.image.width() + width) / 2
         # #        endX = self.image.width() - self.image.width()/10  # the horizontal end point of the central rectangle
@@ -662,37 +647,6 @@ class MainWindow(QMainWindow, BAA_Setup):
         # centralRect = QRectF(startX, startY, percent * (endX - startX) / 100, 2 * radius)
         # captionRect = QRectF(startX, startY + 2 * radius + 10, endX - startX, fontMetrics.height())
         #
-        # if style == '2D':
-        #     brush1 = self.fills['black_brush']
-        #     brush2 = self.fills['black_brush']
-        #     brush3 = self.fills['gray_brush']
-        #
-        # elif style == '3D':
-        #     if color == 'red':
-        #         gradient1 = self.fills['red_radial_gradient']
-        #         gradient2 = self.fills['red_linear_gradient']
-        #     elif color == 'green':
-        #         gradient1 = self.fills['green_radial_gradient']
-        #         gradient2 = self.fills['green_linear_gradient']
-        #     elif color == 'blue':
-        #         gradient1 = self.fills['blue_radial_gradient']
-        #         gradient2 = self.fills['blue_linear_gradient']
-        #     elif color == 'gray':
-        #         gradient1 = self.fills['gray_radial_gradient']
-        #         gradient2 = self.fills['gray_linear_gradient']
-        #     else:
-        #         msg = "There has been an unexpected error."
-        #         QMessageBox.critical(self, "Color Error", msg)
-        #
-        #     # set brushes to gradients
-        #     brush1 = gradient1
-        #     brush1.setCenter(startX, startY + radius)
-        #     brush1.setRadius(radius)
-        #     brush1.setFocalPoint(startX, startY + radius - 0.33 * radius)
-        #     brush2 = QRadialGradient(gradient1)
-        #     brush2.setCenter(endX, startY + radius)
-        #     brush2.setRadius(radius)
-        #     brush2.setFocalPoint(endX, startY + radius - 0.33 * radius)
         #     brush3 = gradient2
         #     brush3.setStart(startX, startY)
         #     brush3.setFinalStop(startX, startY + 2 * radius)
@@ -723,6 +677,51 @@ class MainWindow(QMainWindow, BAA_Setup):
 
     def guageIndicators(self, painter, verticalPosition):
         print('Got to guage indicators.')
+
+    def getIndicatorInfo(self):
+        """
+        Computes several values that are used in all of the images defined above
+        :return: A tuple of tuples, the first containing value strings, possibly converted to monetary format
+                the second containing percent values rounded off to one decimal place,
+                the third the modifier strings that may be needed if the amounts are near or over 100%
+        """
+        goal = float(self.config['targets']['goal'])
+        pledged = float(self.config['current']['pledged'])
+        pledgedString = helperFunctions.decimalFormat(pledged, 'dollars')
+        collected = float(self.config['current']['collected'])
+        collectedString = helperFunctions.decimalFormat(collected, 'dollars')
+        totalFamilies = self.config['targets']['families']
+        participatingFamilies = self.config['current']['families']
+        familiesString = str(participatingFamilies) + ' of ' + str(totalFamilies)
+        pledgePercent = int(pledged * 1000/goal + 0.5)/10
+        collectedPercent = int(collected * 1000/goal + 0.5)/10
+        familiesPercent = int(participatingFamilies * 1000/totalFamilies + 0.5)/10
+
+        pledgeModifier = ''
+        if pledgePercent == 100.0:
+            if pledged < goal: pledgeModifier = 'almost '
+            if pledged > goal: pledgeModifier = 'over '
+        pledgeCaption = pledgedString + '\n' + 'Pledged\n' + pledgeModifier + '(' + str(pledgePercent) + '%)'
+
+        collectedModifier = ''
+        if collectedPercent == 100.0:
+            if collected < goal: collectedModifier = 'almost '
+            if collected > goal: collectedModifier = 'over '
+        collectedCaption = collectedString + ' \n' + 'Collected\n'  + '(' + collectedModifier \
+                           + str(collectedPercent) + '%)'
+
+        familiesModifier = ''
+        if familiesPercent == 100.0:
+            if participatingFamilies < totalFamilies: familiesModifier = 'almost '
+            if participatingFamilies > totalFamilies: familiesModifier =  'over '
+        familiesCaption = familiesString + '\n' + 'Families\n' + \
+                          '(' + familiesModifier + str(familiesPercent) + '%)'
+
+        return ( (pledgedString, collectedString, familiesString), # value strings
+                 (pledgePercent, collectedPercent, familiesPercent), # percents
+                 (pledgeModifier, collectedModifier, familiesModifier) # modifiers
+               )
+
 
     def setTargets(self):
         print("Got to setTargets")
