@@ -516,14 +516,7 @@ class MainWindow(QMainWindow, BAA_Setup):
             brush3.setFinalStop(startX, startY + 2 * radius)
 
         # draw the indicator
-        # first the outline
-        painter.setPen(self.pens['outline_pen'])
-        painter.drawArc(startCapRect, 90 * 16, 180 * 16)
-        painter.drawLine(startX, startY, endX, startY)
-        painter.drawLine(startX, startY + 2* radius, endX, startY + 2* radius)
-        painter.drawArc(endCapRect, 90 * 16, -180 * 16)
-
-        # then the fill
+        # first the fill
         painter.setBrush(brush1)
         painter.setPen(self.pens['no_pen'])
         painter.drawChord(startCapRect, 90 * 16, 180 * 16)
@@ -531,6 +524,13 @@ class MainWindow(QMainWindow, BAA_Setup):
         painter.drawChord(endCapRect, 90 * 16, -180 * 16)
         painter.setBrush(brush3)
         painter.drawRect(centralRect)
+
+        # then the outline
+        painter.setPen(self.pens['outline_pen'])
+        painter.drawArc(startCapRect, 90 * 16, 180 * 16)
+        painter.drawLine(startX, startY, endX, startY)
+        painter.drawLine(startX, startY + 2* radius, endX, startY + 2* radius)
+        painter.drawArc(endCapRect, 90 * 16, -180 * 16)
 
         # draw the caption
         startY += centralRect.height() + 10
@@ -607,9 +607,17 @@ class MainWindow(QMainWindow, BAA_Setup):
                                                  'M\nM\nM').height() + 10 # allows for 4-line families caption + 10 px
         indicatorHeight = height - captionHeight
         radius = indicatorHeight / 10
-        bulbRectF = QRectF(startX + width / 2 - radius, startY + indicatorHeight - 2 * radius, 2 * radius, 2 * radius)
+        bulb_center = QPointF(startX + width / 2, startY + indicatorHeight - radius)
+        tube_left = startX + (width - radius) / 2
+        tube_right = tube_left + radius     # since bulb ends at 90 +/- 30 we have 30 - 60 - 90 triangle
+        tube_top = startY + radius / 2      # tube is one radius in width
+        tube_bottom = tube_top + indicatorHeight - 1.5 * radius - radius * 1.732 / 2   # allow for top cap too
+        bulbRectF = QRectF(tube_left - radius / 2, startY + indicatorHeight - 2 * radius, 2 * radius, 2 * radius)
+        tubeRectF = QRectF(tube_left, tube_top, radius, tube_bottom - tube_top)
+        capRectF = QRectF(tube_left, tube_top - radius / 2, radius, radius)
 
         if style == '2D':
+            # add colors to this section too
             bulbBrush = self.fills('black_brush')
             mercuryBrush = self.fills('gray_brush')
         elif style == '3D':
@@ -628,15 +636,32 @@ class MainWindow(QMainWindow, BAA_Setup):
 
             # set 3D brushes to gradients
             bulbBrush = bulbGradient
-            bulbBrush.setCenter(startX + width / 2, startY + indicatorHeight - radius)
-            bulbBrush.setFocalPoint(startX + width / 4, startY + indicatorHeight - 1.5 * radius)
+            print('bulb_center = ', '(' + str(bulb_center.x()) + ', ' + str(bulb_center.y()) + ')')
+            bulbBrush.setCenter(bulb_center.x(), bulb_center.y())
+            bulbBrush.setRadius(radius)
+            bulbBrush.setFocalPoint(bulb_center.x() - radius / 2, bulb_center.y() - radius / 2)
             mercuryBrush = mercuryGradient
-            # do more work later
+            mercuryBrush.setStart(tube_left, tube_top)
+            mercuryBrush.setFinalStop(tube_right, tube_top)
 
         # draw the indicator
-        # first the outline
+
+        # first draw the bulb
+        painter.setPen(self.pens['no_pen'])
+        painter.setBrush(bulbBrush)
+        painter.drawChord(bulbRectF, 60 * 16, -300 * 16)
+
+        # now draw the tube
+        painter.setBrush(mercuryBrush)
+        painter.drawRect(tubeRectF)
+
+        # draw the outline
         painter.setPen(self.pens['outline_pen'])
         painter.drawArc(bulbRectF, 60 * 16, -300 * 16)
+        painter.drawLine(tube_left, tube_top, tube_left, tube_bottom)
+        painter.drawLine(tube_right, tube_top, tube_right, tube_bottom)
+        painter.drawArc(capRectF, 0, 180 * 16)
+
         # painter.drawLine(startX + width/2, startY, startX + width/2, startY + indicatorHeight)
 
         # radius = (height - fontMetrics.height()) / 2
