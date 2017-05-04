@@ -13,12 +13,13 @@ from PyQt5.QtWidgets import *
 from ui_setup import BAA_Setup
 from ui_targets_dlg import EditTargetsDlg
 from ui_current_dlg import EditCurrentValuesDlg
+from ui_settings import Settings
 
 import helperFunctions
 
 import pickle
 import os
-import time
+import time, datetime
 
 
 class MainWindow(QMainWindow, BAA_Setup):
@@ -28,7 +29,6 @@ class MainWindow(QMainWindow, BAA_Setup):
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        # self.config = self.setDefaults()      # Establishes the structure of the configuration dictionary
 
 # ----------------------------------------------------------------------------------------------------------------------
         """
@@ -44,6 +44,7 @@ class MainWindow(QMainWindow, BAA_Setup):
             temp_config_two['targets'] = temp_config['targets']
             temp_config_two['current'] = temp_config['current']
             self.writeConfig(temp_config_two)
+            self.config_changed = False
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -87,11 +88,12 @@ class MainWindow(QMainWindow, BAA_Setup):
         config = {}
         config['imageSize'] = (640, 480)
         config['imageBackground'] = QColor(Qt.white)
+        config['imageStorage'] = {'path': '.', 'basename': 'baa_progress.jpg', 'useDate': True}
         config['targets'] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
         config['current'] = {'pledged':0, 'collected':0, 'families':0}
         config['type'] = ".png"
-        config['style'] = "3DVertical"
-        config['displayColor'] = True
+        config['style'] = "2DVertical"
+        config['displayColor'] = False
         config['border'] = True
         config['heading_prefix'] = "Our Parish Response to the"
         config['heading'] = "Bishop's Annual Appeal"
@@ -158,6 +160,13 @@ class MainWindow(QMainWindow, BAA_Setup):
         fillDefinitions['white_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.white)}
         fillDefinitions['black_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.black)}
         fillDefinitions['gray_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.gray)}
+        fillDefinitions['darkGray_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.darkGray)}
+        fillDefinitions['red_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.red)}
+        fillDefinitions['darkRed_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.darkRed)}
+        fillDefinitions['green_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.green)}
+        fillDefinitions['darkGreen_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.darkGreen)}
+        fillDefinitions['blue_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.blue)}
+        fillDefinitions['darkBlue_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.darkBlue)}
         fillDefinitions['gray_linear_gradient'] = {'style': Qt.LinearGradientPattern,
                                                 'colors': [[0.0, QColor(Qt.gray)],
                                                            [0.3, QColor(Qt.white)],
@@ -467,16 +476,15 @@ class MainWindow(QMainWindow, BAA_Setup):
         :param height: an integer indicating the height for the indicator and caption
         :return: None
         """
-#        startX = (self.image.width() - width)/2
-#        startX = self.image.width() / 10        # the horizontal starting point of the central rectangle
         painter.setFont(self.fonts['captionFont'])
         fontMetrics = painter. fontMetrics()
         radius = (height - fontMetrics.height())/2
         startX = (self.image.width() - width)/2 + radius
         endX = (self.image.width() + width)/2 - radius
-#        endX = self.image.width() - self.image.width()/10  # the horizontal end point of the central rectangle
         startCapRect = QRectF(startX - radius, startY, 2 * radius, 2 * radius)
         endCapRect = QRectF(endX - radius, startY, 2 * radius, 2 * radius)
+        if percent > 100:
+            percent = 100       # assure the indicator bar does not exceed the end of the indicator itself
         centralRect = QRectF(startX, startY, percent * (endX - startX) / 100, 2 * radius)
         captionRect = QRectF(startX, startY + 2 * radius + 10, endX - startX, fontMetrics.height())
 
@@ -580,10 +588,10 @@ class MainWindow(QMainWindow, BAA_Setup):
 
             self.drawVerticalIndicator(painter, style, 'gray', collectedCaption, collectedPercent,
                                          horizontalPosition, verticalPosition, drawingWidth, drawingHeight)
-            horizontalPosition += drawingHeight + gap
+            horizontalPosition += drawingWidth + gap
 
             self.drawVerticalIndicator(painter, style, 'gray', familiesCaption, familiesPercent,
-                                         horizontalPosition, drawingWidth, drawingWidth, drawingHeight)
+                                         horizontalPosition, verticalPosition, drawingWidth, drawingHeight)
 
     def drawVerticalIndicator(self, painter, style, color, caption, percent, startX, startY, width, height):
         """
@@ -612,34 +620,49 @@ class MainWindow(QMainWindow, BAA_Setup):
         tube_right = tube_left + radius     # since bulb ends at 90 +/- 30 we have 30 - 60 - 90 triangle
         tube_top = startY + radius / 2      # tube is one radius in width
         tube_bottom = tube_top + indicatorHeight - 1.5 * radius - radius * 1.732 / 2   # allow for top cap too
+        tube_length = tube_bottom - tube_top
         bulbRectF = QRectF(tube_left - radius / 2, startY + indicatorHeight - 2 * radius, 2 * radius, 2 * radius)
-        tubeRectF = QRectF(tube_left, tube_top, radius, tube_bottom - tube_top)
+        if percent > 100:
+            percent = 100
+        mercury_length = percent * (tube_length)/100
+        tubeRectF = QRectF(tube_left, tube_top + tube_length - mercury_length, radius, mercury_length)
         capRectF = QRectF(tube_left, tube_top - radius / 2, radius, radius)
 
         if style == '2D':
-            # add colors to this section too
-            bulbBrush = self.fills('black_brush')
-            mercuryBrush = self.fills('gray_brush')
+            if color == 'red':
+                bulbBrush = self.fills['darkRed_brush']
+                mercuryBrush = self.fills['red_brush']
+            elif color == 'green':
+                bulbBrush = self.fills['darkGreen_brush']
+                mercuryBrush = self.fills['green_brush']
+            elif color == 'blue':
+                bulbBrush = self.fills['darkBlue_brush']
+                mercuryBrush = self.fills['blue_brush']
+            else:
+                bulbBrush = self.fills['darkGray_brush']
+                mercuryBrush = self.fills['gray_brush']
         elif style == '3D':
             if color == 'red':
                 bulbGradient = self.fills['red_radial_gradient']
                 mercuryGradient = self.fills['red_linear_gradient']
-            if color == 'green':
+            elif color == 'green':
                 bulbGradient = self.fills['green_radial_gradient']
                 mercuryGradient = self.fills['green_linear_gradient']
-            if color == 'blue':
+            elif color == 'blue':
                 bulbGradient = self.fills['blue_radial_gradient']
                 mercuryGradient = self.fills['blue_linear_gradient']
-            if color == 'gray':
+            else:
                 bulbGradient = self.fills['gray_radial_gradient']
                 mercuryGradient = self.fills['gray_linear_gradient']
 
             # set 3D brushes to gradients
             bulbBrush = bulbGradient
-            print('bulb_center = ', '(' + str(bulb_center.x()) + ', ' + str(bulb_center.y()) + ')')
             bulbBrush.setCenter(bulb_center.x(), bulb_center.y())
             bulbBrush.setRadius(radius)
             bulbBrush.setFocalPoint(bulb_center.x() - radius / 2, bulb_center.y() - radius / 2)
+            capBrush = QRadialGradient(bulbGradient)
+            capBrush.setCenter(startX + width / 2, tube_top)
+            capBrush.setFocalPoint(startX + width / 2 - 0.17 * radius, tube_top)
             mercuryBrush = mercuryGradient
             mercuryBrush.setStart(tube_left, tube_top)
             mercuryBrush.setFinalStop(tube_right, tube_top)
@@ -655,43 +678,17 @@ class MainWindow(QMainWindow, BAA_Setup):
         painter.setBrush(mercuryBrush)
         painter.drawRect(tubeRectF)
 
+        # finally draw the cap if percent is 100 or more
+        if percent >= 100:
+            painter.setBrush(capBrush)
+            painter.drawChord(capRectF, 0, 180 * 16)
+
         # draw the outline
         painter.setPen(self.pens['outline_pen'])
         painter.drawArc(bulbRectF, 60 * 16, -300 * 16)
         painter.drawLine(tube_left, tube_top, tube_left, tube_bottom)
         painter.drawLine(tube_right, tube_top, tube_right, tube_bottom)
         painter.drawArc(capRectF, 0, 180 * 16)
-
-        # painter.drawLine(startX + width/2, startY, startX + width/2, startY + indicatorHeight)
-
-        # radius = (height - fontMetrics.height()) / 2
-        # endX = (self.image.width() + width) / 2
-        # #        endX = self.image.width() - self.image.width()/10  # the horizontal end point of the central rectangle
-        # startCapRect = QRectF(startX - radius, startY, 2 * radius, 2 * radius)
-        # endCapRect = QRectF(endX - radius, startY, 2 * radius, 2 * radius)
-        # centralRect = QRectF(startX, startY, percent * (endX - startX) / 100, 2 * radius)
-        # captionRect = QRectF(startX, startY + 2 * radius + 10, endX - startX, fontMetrics.height())
-        #
-        #     brush3 = gradient2
-        #     brush3.setStart(startX, startY)
-        #     brush3.setFinalStop(startX, startY + 2 * radius)
-        #
-        # # draw the indicator
-        # # first the outline
-        # painter.setPen(self.pens['outline_pen'])
-        # painter.drawArc(startCapRect, 90 * 16, 180 * 16)
-        # painter.drawLine(startX, startY, endX, startY)
-        # painter.drawLine(startX, startY + 2 * radius, endX, startY + 2 * radius)
-        # painter.drawArc(endCapRect, 90 * 16, -180 * 16)
-        #
-        # # then the fill
-        # painter.setBrush(brush1)
-        # painter.setPen(self.pens['no_pen'])
-        # painter.drawChord(startCapRect, 90 * 16, 180 * 16)
-        # painter.setBrush(brush2)
-        # painter.drawChord(endCapRect, 90 * 16, -180 * 16)
-        # painter.setBrush(brush3)
-        # painter.drawRect(centralRect)
 
         # draw the caption
         captionTop = startY + indicatorHeight
@@ -726,46 +723,34 @@ class MainWindow(QMainWindow, BAA_Setup):
         if pledgePercent == 100.0:
             if pledged < goal: pledgeModifier = 'almost '
             if pledged > goal: pledgeModifier = 'over '
-        pledgeCaption = pledgedString + '\n' + 'Pledged\n' + pledgeModifier + '(' + str(pledgePercent) + '%)'
 
         collectedModifier = ''
         if collectedPercent == 100.0:
             if collected < goal: collectedModifier = 'almost '
             if collected > goal: collectedModifier = 'over '
-        collectedCaption = collectedString + ' \n' + 'Collected\n'  + '(' + collectedModifier \
-                           + str(collectedPercent) + '%)'
 
         familiesModifier = ''
         if familiesPercent == 100.0:
             if participatingFamilies < totalFamilies: familiesModifier = 'almost '
             if participatingFamilies > totalFamilies: familiesModifier =  'over '
-        familiesCaption = familiesString + '\n' + 'Families\n' + \
-                          '(' + familiesModifier + str(familiesPercent) + '%)'
 
         return ( (pledgedString, collectedString, familiesString), # value strings
                  (pledgePercent, collectedPercent, familiesPercent), # percents
                  (pledgeModifier, collectedModifier, familiesModifier) # modifiers
                )
 
-
     def setTargets(self):
-        print("Got to setTargets")
         dlg = EditTargetsDlg(self.config["targets"])
         if dlg.exec():
             self.config_changed = True
             self.grantAccess()
-        else:
-            print("Skipped dlg.exec")
-        self.drawGraphic()
+            self.drawGraphic()
 
     def setCurrent(self):
-        print("Got to setCurrent")
         dlg = EditCurrentValuesDlg(self.config['current'])
         if dlg.exec():
             self.config_changed = True
-        else:
-            print("Skipped dlg.exec")
-        self.drawGraphic()
+            self.drawGraphic()
 
     def saveImage(self):
         print("Got to saveImage")
@@ -773,18 +758,51 @@ class MainWindow(QMainWindow, BAA_Setup):
     def saveImageAs(self):
         print("Got to saveImageAs")
 
-    def exit(self):
-        self.close()  # goes to closeEvent below
+    def checkForSave(self):
+        """
+        Creates a yes/no/cancel message box so the user can decide whether to save the image file with the current
+        default settings, change the settings, temporarily or permanently, or not at all
+        :return: The QMessageBox results: QMessageBox.Yes, QMessageBox.No, or QMessageBox.Cancel
+        """
+        box = QMessageBox()
+        msg = 'Do you wish to save the changes you have made?'
+        box.setText(msg)
+        box.setStandardButtons(QMessageBox.Yes | QMessageBox.No |
+                               QMessageBox.Cancel)
+        box.setDefaultButton(QMessageBox.Yes)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle('Save Graphic Query')
+        return box.exec()
 
-    def closeEvent(self, Event):
-        print("Got to closeEvent")
-        print("Save config.cfg if it has been changed. If it keeps current data, it will probably have been changed")
+    def closeEvent(self, event):
         if self.config_changed:
-            self.writeConfig(self.config)
-        self.close()
+            result = self.checkForSave()
+            if result == QMessageBox.Yes:
+                fileDesignation = self.getFileDesignation()
+                self.image.save(fileDesignation)
+                self.writeConfig(self.config)
+                self.close()
+            elif result == QMessageBox.No:
+                self.close()
+            else:
+                event.ignore()
+
+    def getFileDesignation(self):
+        """
+        Creates the complete filename, including path, for the image file
+        :return: the complete filename as a string
+        """
+        path = self.config['imageStorage']['path']
+        filename = self.config['imageStorage']['basename']
+        if self.config['imageStorage']['useDate']:
+            now = datetime.datetime.now()
+            filename = str(now.date()) + '-' + filename
+        return path + '/' + filename
 
     def settings(self):
-        print("Got to settings")
+        dlg = Settings(self.config)
+        dlg.exec()
+
 
     def help(self):
         if not self.displayHelp():

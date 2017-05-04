@@ -124,6 +124,7 @@ class EditCurrentValuesDlg(QDialog):
         self.current['pledged'] = float(helperFunctions.cleanNumber(pledged))
         self.current['collected'] = float(helperFunctions.cleanNumber(collected))
         self.current['families'] = int(helperFunctions.cleanNumber(families))
+        self.config_changed = True
 
         QDialog.accept(self)
 

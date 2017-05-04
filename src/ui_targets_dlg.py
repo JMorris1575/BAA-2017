@@ -130,6 +130,7 @@ class EditTargetsDlg(QDialog):
         self.targets['goal'] = float(helperFunctions.cleanNumber(goal))
         self.targets['families'] = int(helperFunctions.cleanNumber(families))
         self.targets['set'] = True
+        self.config_changed = True
 
         QDialog.accept(self)
 
