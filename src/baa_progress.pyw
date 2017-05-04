@@ -88,7 +88,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         config = {}
         config['imageSize'] = (640, 480)
         config['imageBackground'] = QColor(Qt.white)
-        config['imageStorage'] = {'path': '.', 'basename': 'baa_progress.jpg', 'useDate': True}
+        config['imageStorage'] = {'path': '.', 'basename': 'baa_progress', 'format': 'jpg', 'useDate': True}
         config['targets'] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
         config['current'] = {'pledged':0, 'collected':0, 'families':0}
         config['type'] = ".png"
@@ -794,10 +794,11 @@ class MainWindow(QMainWindow, BAA_Setup):
         """
         path = self.config['imageStorage']['path']
         filename = self.config['imageStorage']['basename']
+        image_format = self.config['imageStorage']['format']
         if self.config['imageStorage']['useDate']:
             now = datetime.datetime.now()
             filename = str(now.date()) + '-' + filename
-        return path + '/' + filename
+        return path + '/' + filename + '.' + image_format
 
     def settings(self):
         dlg = Settings(self.config)
