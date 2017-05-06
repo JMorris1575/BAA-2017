@@ -2,17 +2,17 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-import os.path
+import os, os.path, sys
 
 class Settings(QDialog):
 
     def __init__(self, config, parent=None):
         super(Settings, self).__init__(parent)
+        self.config = config
         self.setup(config)
 
     def setup(self, config):
 
-        # ToDo: Change the fileWidgetLayout to a QVBoxLayout and use QHBoxLayouts to set the individual lines with a spacer at the bottom of them all.
         self.resize(QSize(400, 360))
 
         settingsWidget = QTabWidget(self)
@@ -32,6 +32,7 @@ class Settings(QDialog):
         dirEdit.setAlignment(Qt.AlignLeft)
         dirEdit.setText(current_path)
         dirEdit.setCursorPosition(0)
+        dirEdit.editingFinished.connect(self.changeDir)
         browseButton = QPushButton('Browse...')
         dirLayout = QHBoxLayout()
         dirLayout.addWidget(dirLabel, 1)
@@ -110,4 +111,29 @@ class Settings(QDialog):
         settingsWidget.addTab(styleSettingsWidget, 'Styles')
 
         settingsLayout.addWidget(settingsWidget)
+
+    @pyqtSlot()
+    def changeDir(self):
+        """
+        Checks whether the directory the user enters actually exists. If so, changes self.config accordingly
+        :return: True if the directory is successfully changed, False otherwise
+        """
+        path = self.sender().text()
+        if os.path.exists(path):
+            self.config['imageStorage']['path'] = path
+        else:
+            msg = "That path does not exist. Would you like me to create it for you?"
+            response = QMessageBox.question(self, 'BAA Progress', msg)
+            if response == QMessageBox.Yes:
+                os.mkdir(path)
+                try:
+                    os.mkdir(path)
+                    self.config['imageStorage']['path'] = path
+                except:
+                    print("Unexpected error in changeDir:", sys.exc_info()[0])
+
+
+
+
+
 
