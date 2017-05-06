@@ -62,7 +62,9 @@ class Settings(QDialog):
         dateGroup.setWhatsThis('This determines whether the date will be included in the filename to keep them' +
                                'separate and for archiving purposes.')
         yesButton = QRadioButton('Yes')
+        yesButton.clicked.connect(self.setDateUse)
         noButton = QRadioButton('No')
+        noButton.clicked.connect(self.setDateUse)
         dateGroupLayout = QHBoxLayout()
         dateGroupLayout.addWidget(yesButton)
         dateGroupLayout.addWidget(noButton)
@@ -82,8 +84,11 @@ class Settings(QDialog):
         formatGroup.setWhatsThis('This is where you select one of the three formats in which the image can be saved.')
         formatGroup.setMinimumWidth(200)
         jpgButton = QRadioButton('.jpg')
+        jpgButton.clicked.connect(self.setImageFormat)
         pngButton = QRadioButton('.png')
+        pngButton.clicked.connect(self.setImageFormat)
         bmpButton = QRadioButton('.bmp')
+        bmpButton.clicked.connect(self.setImageFormat)
         formatGroupLayout = QHBoxLayout()
         formatGroupLayout.addWidget(jpgButton)
         formatGroupLayout.addWidget(pngButton)
@@ -160,6 +165,22 @@ class Settings(QDialog):
             QMessageBox.information(self, 'BAA Progress', msg)
             self.nameEdit.setFocus()
             self.nameEdit.selectAll()
+
+    @pyqtSlot()
+    def setDateUse(self):
+        setting = self.sender().text()
+        if setting == 'Yes':
+            self.main.config['imageStorage']['useDate'] = True
+        else:
+            self.main.config['imageStorage']['useDate'] = False
+        self.main.config_changed = True
+
+    @pyqtSlot()
+    def setImageFormat(self):
+        setting = self.sender().text()[1:]      # gets the caption and strips off the period (.)
+        self.main.config['imageStorage']['format'] = setting
+        self.main.config_changed = True
+
 
 
 
