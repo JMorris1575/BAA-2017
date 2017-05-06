@@ -28,17 +28,18 @@ class Settings(QDialog):
         dirLabel = QLabel('Directory:')
         dirLabel.setAlignment(Qt.AlignRight)
         current_path = os.path.abspath(config['imageStorage']['path'])
-        dirEdit = QLineEdit()
-        dirEdit.setWhatsThis('This is where your image file will be saved. You can type it in here or browse to' +
+        self.dirEdit = QLineEdit()
+        self.dirEdit.setWhatsThis('This is where your image file will be saved. You can type it in here or browse to' +
                               'the desired location by clicking on the Browse... button at the right.')
-        dirEdit.setAlignment(Qt.AlignLeft)
-        dirEdit.setText(current_path)
-        dirEdit.setCursorPosition(0)
-        dirEdit.editingFinished.connect(self.changeDir)
+        self.dirEdit.setAlignment(Qt.AlignLeft)
+        self.dirEdit.setText(current_path)
+        self.dirEdit.setCursorPosition(0)
+        self.dirEdit.editingFinished.connect(self.pathEdit)
         browseButton = QPushButton('Browse...')
+        browseButton.clicked.connect(self.browse)
         dirLayout = QHBoxLayout()
         dirLayout.addWidget(dirLabel, 1)
-        dirLayout.addWidget(dirEdit, 3)
+        dirLayout.addWidget(self.dirEdit, 3)
         dirLayout.addWidget(browseButton, 0)
         fileWidgetLayout.addLayout(dirLayout)
 
@@ -115,12 +116,19 @@ class Settings(QDialog):
         settingsLayout.addWidget(settingsWidget)
 
     @pyqtSlot()
-    def changeDir(self):
+    def pathEdit(self):
+        """
+        Obtains the path text from the sender and sends it on to self.changeDir()
+        :return: None
+        """
+        path = self.sender().text()
+        self.changeDir(path)
+
+    def changeDir(self, path):
         """
         Checks whether the directory the user enters actually exists. If so, changes self.config accordingly
         :return: True if the directory is successfully changed, False otherwise
         """
-        path = self.sender().text()
         if os.path.exists(path):
             self.main.config['imageStorage']['path'] = path
             self.main.config_changed = True
@@ -135,7 +143,10 @@ class Settings(QDialog):
                 except:
                     print("Unexpected error in changeDir:", sys.exc_info()[0])
 
-
+    def browse(self):
+        path = QFileDialog.getExistingDirectory(self, 'Select Directory', self.main.config['imageStorage']['path'])
+        self.dirEdit.setText(path)
+        self.changeDir(path)
 
 
 
