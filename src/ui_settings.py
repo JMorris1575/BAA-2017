@@ -2,7 +2,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-import os, os.path, sys
+import os, os.path, sys, re
 
 class Settings(QDialog):
 
@@ -45,14 +45,15 @@ class Settings(QDialog):
 
         nameLabel = QLabel('Filename:')
         nameLabel.setAlignment(Qt.AlignRight)
-        nameEdit = QLineEdit()
-        nameEdit.setWhatsThis('This is the core part of the image filename. It can be prefixed with the current date.' +
+        self.nameEdit = QLineEdit()
+        self.nameEdit.setWhatsThis('This is the core part of the image filename. It can be prefixed with the current date.' +
                               'See below.')
-        nameEdit.setAlignment(Qt.AlignLeft)
-        nameEdit.setText(config['imageStorage']['basename'])
+        self.nameEdit.setAlignment(Qt.AlignLeft)
+        self.nameEdit.setText(config['imageStorage']['basename'])
+        self.nameEdit.editingFinished.connect(self.changeFilename)
         nameLayout = QHBoxLayout()
         nameLayout.addWidget(nameLabel, 1)
-        nameLayout.addWidget(nameEdit, 4)
+        nameLayout.addWidget(self.nameEdit, 4)
         fileWidgetLayout.addLayout(nameLayout)
 
         dateLabel = QLabel('Date:')
@@ -147,6 +148,19 @@ class Settings(QDialog):
         path = QFileDialog.getExistingDirectory(self, 'Select Directory', self.main.config['imageStorage']['path'])
         self.dirEdit.setText(path)
         self.changeDir(path)
+
+    def changeFilename(self):
+        filename = self.nameEdit.text()
+        test = re.match(r'[\w]+', filename)
+        if test.group() == filename:
+            self.main.config['imageStorage']['basename'] = filename
+            self.main.config_changed = True
+        else:
+            msg = 'Filenames can only contain letters, numbers, and the underscore (_). Please try again.'
+            QMessageBox.information(self, 'BAA Progress', msg)
+            self.nameEdit.setFocus()
+            self.nameEdit.selectAll()
+
 
 
 
