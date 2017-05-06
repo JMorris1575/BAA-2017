@@ -801,7 +801,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         return path + '/' + filename + '.' + image_format
 
     def settings(self):
-        dlg = Settings(self.config)
+        dlg = Settings(self)
         dlg.exec()
 
 

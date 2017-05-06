@@ -6,9 +6,11 @@ import os, os.path, sys
 
 class Settings(QDialog):
 
-    def __init__(self, config, parent=None):
+    def __init__(self, main, parent=None):
         super(Settings, self).__init__(parent)
-        self.config = config
+        self.main = main
+        config = main.config
+        print('parent = ', parent)
         self.setup(config)
 
     def setup(self, config):
@@ -120,17 +122,21 @@ class Settings(QDialog):
         """
         path = self.sender().text()
         if os.path.exists(path):
-            self.config['imageStorage']['path'] = path
+            self.main.config['imageStorage']['path'] = path
+            self.main.config_changed = True
         else:
             msg = "That path does not exist. Would you like me to create it for you?"
             response = QMessageBox.question(self, 'BAA Progress', msg)
             if response == QMessageBox.Yes:
-                os.mkdir(path)
                 try:
                     os.mkdir(path)
-                    self.config['imageStorage']['path'] = path
+                    self.main.config['imageStorage']['path'] = path
+                    self.main.config_changed = True
                 except:
                     print("Unexpected error in changeDir:", sys.exc_info()[0])
+
+
+
 
 
 
