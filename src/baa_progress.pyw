@@ -92,8 +92,8 @@ class MainWindow(QMainWindow, BAA_Setup):
         config['targets'] = {'set':False, 'year':time.strftime('%Y'), 'goal': 0, 'families': 0}
         config['current'] = {'pledged':0, 'collected':0, 'families':0}
         config['type'] = ".png"
-        config['style'] = "2DVertical"
-        config['displayColor'] = False
+        config['style'] = "3DVertical"
+        config['displayColor'] = True
         config['border'] = True
         config['heading_prefix'] = "Our Parish Response to the"
         config['heading'] = "Bishop's Annual Appeal"
