@@ -94,7 +94,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         config['type'] = ".png"
         config['style'] = "3DVertical"
         config['displayColor'] = True
-        config['border'] = True
+        config['border'] = 'single'     # could be none, single or double
         config['heading_prefix'] = "Our Parish Response to the"
         config['heading'] = "Bishop's Annual Appeal"
         config['penDefinitions'] = self.definePens()
@@ -345,6 +345,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         self.drawingBoard.setPixmap(QPixmap.fromImage(self.image))
 
     def drawGraphic(self):
+        # ToDo: make sure graphic gets save whenever it is changed
         """
         Draws the graphic according to the current data and current settings.
         This method only creates the painter and draws the border, if any, the
@@ -361,19 +362,23 @@ class MainWindow(QMainWindow, BAA_Setup):
         painter.setPen(self.pens['no_pen'])
         painter.setBrush(self.config['imageBackground'])
         painter.drawRect(0, 0, imageWidth, imageHeight)
-        if self.config['border']:
+        painter.setPen(self.pens['border_pen'])
+        borderStyle = self.config['border']
+        if borderStyle == 'single' or borderStyle == 'double':
             painter.setPen(self.pens['border_pen'])
             painter.pen().setWidth(10)
             penWidth = painter.pen().width()
             print('penWidth = ', penWidth)
-            painter.drawRect(0, 0, imageWidth-penWidth, imageHeight-penWidth)
+            painter.drawRect(1, 1, imageWidth-penWidth-2, imageHeight-penWidth-2)
+        if borderStyle == 'double':
+            painter.drawRect(4, 4, imageWidth-penWidth - 8, imageHeight - penWidth - 8)
 
         # draw heading prefix
         painter.setFont(self.fonts['prefixFont'])
         textRect = painter.fontMetrics().boundingRect(self.config['heading_prefix'])
         textWidth = textRect.width()
         textHeight = textRect.height()
-        verticalPosition = imageHeight * (textHeight/imageHeight) - textHeight
+        verticalPosition = imageHeight * (textHeight/imageHeight) - textHeight + 2
         drawRect = painter.boundingRect((imageWidth - textWidth)/2, verticalPosition, textWidth, textHeight,
                                         Qt.AlignCenter, self.config['heading_prefix'])
         painter.drawText(drawRect, Qt.AlignCenter, self.config['heading_prefix'])
@@ -749,11 +754,13 @@ class MainWindow(QMainWindow, BAA_Setup):
     def setCurrent(self):
         dlg = EditCurrentValuesDlg(self.config['current'])
         if dlg.exec():
-            self.config_changed = True
-            self.drawGraphic()
+            if dlg.config_changed:
+                self.config_changed = True
+                self.drawGraphic()
 
     def saveImage(self):
-        print("Got to saveImage")
+        fileDesignation = self.getFileDesignation()
+        self.image.save(fileDesignation)
 
     def saveImageAs(self):
         print("Got to saveImageAs")
@@ -775,11 +782,10 @@ class MainWindow(QMainWindow, BAA_Setup):
         return box.exec()
 
     def closeEvent(self, event):
+        self.saveImage()
         if self.config_changed:
             result = self.checkForSave()
             if result == QMessageBox.Yes:
-                fileDesignation = self.getFileDesignation()
-                self.image.save(fileDesignation)
                 self.writeConfig(self.config)
                 self.close()
             elif result == QMessageBox.No:
@@ -803,6 +809,8 @@ class MainWindow(QMainWindow, BAA_Setup):
     def settings(self):
         dlg = Settings(self)
         dlg.exec()
+        if dlg.image_changed:
+            self.drawGraphic()
 
 
     def help(self):

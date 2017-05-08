@@ -10,6 +10,10 @@ class EditCurrentValuesDlg(QDialog):
     def __init__(self, current, parent=None):
         super(EditCurrentValuesDlg, self).__init__(parent)
         self.current = current
+        self.oldPledged = self.current['pledged']
+        self.oldCollected = self.current['collected']
+        self.oldFamilies = self.current['families']
+        self.image_changed = False
         self.setup()
 
     def setup(self):
@@ -17,7 +21,7 @@ class EditCurrentValuesDlg(QDialog):
 
         pledgeLabel = QLabel("Current Pledge:")
         self.pledgeEdit = QLineEdit()
-        self.pledgeEdit.setText(helperFunctions.decimalFormat(self.current['pledged'], 'dollars'))
+        self.pledgeEdit.setText(helperFunctions.decimalFormat(self.oldPledged, 'dollars'))
         self.pledgeEdit.setToolTip('Enter the current pledge.')
         self.pledgeEdit.setWhatsThis('This is where the current pledge is entered. It is used to create the \'Pledged\' +'
                                    'part of the graphic.')
@@ -28,7 +32,7 @@ class EditCurrentValuesDlg(QDialog):
 
         collectedLabel = QLabel("Amount Collected:")
         self.collectedEdit = QLineEdit()
-        self.collectedEdit.setText(helperFunctions.decimalFormat(self.current['collected'], 'dollars'))
+        self.collectedEdit.setText(helperFunctions.decimalFormat(self.oldCollected, 'dollars'))
         self.collectedEdit.setToolTip("Enter the amount currently collected for BAA.")
         self.collectedEdit.setWhatsThis('This is where the current amount collected is entered. It is used to create ' +
                                         'the \'Amount Collected\' part of the graphic. You may enter it formatted ' +
@@ -40,7 +44,7 @@ class EditCurrentValuesDlg(QDialog):
 
         familiesLabel = QLabel("Total Family Count:")
         self.familiesEdit = QLineEdit()
-        self.familiesEdit.setText(str(self.current["families"]))
+        self.familiesEdit.setText(str(self.oldFamilies))
         self.familiesEdit.setToolTip('Enter the number of families who have contributed so far.')
         self.familiesEdit.setWhatsThis('This is where the number of families currently participating is entered ' +
                                        'This is used to display the percentage of families participating in this ' +
@@ -124,7 +128,11 @@ class EditCurrentValuesDlg(QDialog):
         self.current['pledged'] = float(helperFunctions.cleanNumber(pledged))
         self.current['collected'] = float(helperFunctions.cleanNumber(collected))
         self.current['families'] = int(helperFunctions.cleanNumber(families))
-        self.config_changed = True
+        if (self.current['pledged'] != self.oldPledged)\
+                or (self.current['collected'] != self.oldCollected)\
+                or (self.current['families'] != self.oldFamilies):
+            self.config_changed = True
+            self.image_changed = True
 
         QDialog.accept(self)
 

@@ -10,7 +10,7 @@ class Settings(QDialog):
         super(Settings, self).__init__(parent)
         self.main = main
         config = main.config
-        print('parent = ', parent)
+        self.image_changed = False
         self.setup(config)
 
     def setup(self, config):
@@ -108,16 +108,46 @@ class Settings(QDialog):
         fileWidgetLayout.addStretch(0)
 
         appearanceSettingsWidget = QWidget()
-        lookLabel = QLabel('Look at me!')
         appearanceWidgetLayout = QVBoxLayout(appearanceSettingsWidget)
-        appearanceWidgetLayout.addWidget(lookLabel)
         settingsWidget.addTab(appearanceSettingsWidget, 'Border/Titles')
+        settingsWidget.setToolTip('Control the border and titles used in the image.')
+
+        borderLabel = QLabel('Border:')
+        borderLabel.setAlignment(Qt.AlignRight)
+        borderGroup = QGroupBox('Select One:')
+        borderGroup.setWhatsThis('Allows you to decide whether to have a border and whether it is to be a' +
+                                 'single or double-line border.')
+        noneButton = QRadioButton('No Border')
+        noneButton.clicked.connect(self.setBorder)
+        singleButton = QRadioButton('Single Border')
+        singleButton.clicked.connect(self.setBorder)
+        doubleButton = QRadioButton('Double Border')
+        doubleButton.clicked.connect(self.setBorder)
+        borderStyle = self.main.config['border']
+        if borderStyle == 'none':
+            noneButton.setChecked(True)
+        elif borderStyle == 'single':
+            singleButton.setChecked(True)
+        else:
+            doubleButton.setChecked(True)
+        borderGroupLayout = QHBoxLayout()
+        borderGroupLayout.addWidget(noneButton)
+        borderGroupLayout.addWidget(singleButton)
+        borderGroupLayout.addWidget(doubleButton)
+        borderGroup.setLayout(borderGroupLayout)
+        borderLayout = QHBoxLayout()
+        borderLayout.addWidget(borderLabel, 1)
+        borderLayout.addWidget(borderGroup, 4)
+        appearanceWidgetLayout.addLayout(borderLayout)
+        appearanceWidgetLayout.addSpacing(0)
+
+
 
         styleSettingsWidget = QWidget()
         seeLabel = QLabel('"I see" said the blind man.')
         styleWidgetLayout = QVBoxLayout(styleSettingsWidget)
         styleWidgetLayout.addWidget(seeLabel)
-        settingsWidget.addTab(styleSettingsWidget, 'Styles')
+        settingsWidget.addTab(styleSettingsWidget, 'Style')
 
         settingsLayout.addWidget(settingsWidget)
 
@@ -180,6 +210,18 @@ class Settings(QDialog):
         setting = self.sender().text()[1:]      # gets the caption and strips off the period (.)
         self.main.config['imageStorage']['format'] = setting
         self.main.config_changed = True
+
+    @pyqtSlot()
+    def setBorder(self):
+        setting = self.sender().text()
+        if setting == 'No Border':
+            self.main.config['border'] = 'none'
+        elif setting == 'Single Border':
+            self.main.config['border'] = 'single'
+        else:
+            self.main.config['border'] = 'double'
+        self.main.config_changed = True
+        self.image_changed = True
 
 
 
