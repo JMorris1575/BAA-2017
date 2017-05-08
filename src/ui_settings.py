@@ -175,10 +175,51 @@ class Settings(QDialog):
         # Style Settings Tab
 
         styleSettingsWidget = QWidget()
-        seeLabel = QLabel('"I see" said the blind man.')
         styleWidgetLayout = QVBoxLayout(styleSettingsWidget)
-        styleWidgetLayout.addWidget(seeLabel)
         settingsWidget.addTab(styleSettingsWidget, 'Style')
+        settingsWidget.setToolTip('Control the color, appearance and type of the indicators.')
+
+        colorLabel = QLabel('Coloring:')
+        colorLabel.setAlignment(Qt.AlignRight)
+        colorGroup = QGroupBox('Select One:')
+        colorGroup.setWhatsThis('Choose color or grayscale (which may print better in the bulletin).')
+        colorButton = QRadioButton('Color')
+        colorButton.clicked.connect(self.setColor)
+        grayscaleButton = QRadioButton('Grayscale')
+        grayscaleButton.clicked.connect(self.setColor)
+        colorGroupLayout = QHBoxLayout()
+        colorGroupLayout.addWidget(colorButton)
+        colorGroupLayout.addWidget(grayscaleButton)
+        colorGroup.setLayout(colorGroupLayout)
+        if self.main.config['displayColor']:
+            colorButton.setChecked(True)
+        else:
+            grayscaleButton.setChecked(True)
+        colorLayout = QHBoxLayout()
+        colorLayout.addWidget(colorLabel, 1)
+        colorLayout.addWidget(colorGroup, 4)
+        styleWidgetLayout.addLayout(colorLayout)
+
+        styleLabel = QLabel('Style:')
+        styleLabel.setAlignment(Qt.AlignRight)
+        styleGroup = QGroupBox('Select One:')
+        styleGroup.setWhatsThis('Give the indicators either a flat or a three-dimensional appearance.')
+        flatButton = QRadioButton('Flat')
+        flatButton.clicked.connect(self.setStyle)
+        solidButton = QRadioButton('Solid')
+        solidButton.clicked.connect(self.setStyle)
+        styleGroupLayout = QHBoxLayout()
+        styleGroupLayout.addWidget(flatButton)
+        styleGroupLayout.addWidget(solidButton)
+        styleGroup.setLayout(styleGroupLayout)
+        style = self.main.config['style'][0:2]
+        if style == '2D':
+            flatButton.setChecked(True)
+        else:
+            solidButton.setChecked(True)
+
+
+        styleWidgetLayout.addStretch(0)
 
         settingsLayout.addWidget(settingsWidget)
 
@@ -263,5 +304,14 @@ class Settings(QDialog):
     def headingEdit(self):
         heading = self.mainHeadingEdit.text()
         self.main.config['heading'] = heading
+        self.main.config_changed = True
+        self.image_changed = True
+
+    @pyqtSlot()
+    def setColor(self):
+        if self.sender().text() == 'Color':
+            self.main.config['displayColor'] = True
+        else:
+            self.main.config['displayColor'] = False
         self.main.config_changed = True
         self.image_changed = True
