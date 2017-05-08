@@ -20,6 +20,8 @@ class Settings(QDialog):
         settingsWidget = QTabWidget(self)
         settingsLayout = QVBoxLayout(self)
 
+        # File Settings Tab
+
         fileSettingsWidget = QWidget()
         fileWidgetLayout = QVBoxLayout(fileSettingsWidget)
         settingsWidget.addTab(fileSettingsWidget, 'Filename/Location')
@@ -107,7 +109,7 @@ class Settings(QDialog):
         fileWidgetLayout.addLayout(formatLayout)
         fileWidgetLayout.addStretch(0)
 
-        # Appearance Tab
+        # Appearance Settings Tab
 
         appearanceSettingsWidget = QWidget()
         appearanceWidgetLayout = QVBoxLayout(appearanceSettingsWidget)
@@ -142,7 +144,7 @@ class Settings(QDialog):
         borderLayout.addWidget(borderGroup, 4)
         appearanceWidgetLayout.addLayout(borderLayout)
 
-        headingPrefixLabel = QLabel('Heading Line 1:')
+        headingPrefixLabel = QLabel('Heading 1:')
         headingPrefixLabel.setAlignment(Qt.AlignRight)
         self.headingPrefixEdit = QLineEdit()
         self.headingPrefixEdit.setWhatsThis('Here you can rewrite the initial line of the heading. You may, for instance' +
@@ -155,10 +157,22 @@ class Settings(QDialog):
         prefixLayout.addWidget(self.headingPrefixEdit, 4)
         appearanceWidgetLayout.addLayout(prefixLayout)
 
+        mainHeadingLabel = QLabel('Main Heading:')
+        mainHeadingLabel.setAlignment(Qt.AlignRight)
+        self.mainHeadingEdit = QLineEdit()
+        self.mainHeadingEdit.setWhatsThis('Here you can rewrite the initial line of the heading. You may, for instance' +
+                                            'want to include the name of the parish.')
+        self.mainHeadingEdit.setAlignment(Qt.AlignLeft)
+        self.mainHeadingEdit.setText(config['heading'])
+        self.mainHeadingEdit.editingFinished.connect(self.headingEdit)
+        headingLayout = QHBoxLayout()
+        headingLayout.addWidget(mainHeadingLabel, 1)
+        headingLayout.addWidget(self.mainHeadingEdit, 4)
+        appearanceWidgetLayout.addLayout(headingLayout)
 
-        appearanceWidgetLayout.addSpacing(0)
+        appearanceWidgetLayout.addStretch(0)
 
-
+        # Style Settings Tab
 
         styleSettingsWidget = QWidget()
         seeLabel = QLabel('"I see" said the blind man.')
@@ -246,9 +260,8 @@ class Settings(QDialog):
         self.main.config_changed = True
         self.image_changed = True
 
-
-
-
-
-
-
+    def headingEdit(self):
+        heading = self.mainHeadingEdit.text()
+        self.main.config['heading'] = heading
+        self.main.config_changed = True
+        self.image_changed = True
