@@ -82,7 +82,7 @@ class Settings(QDialog):
         formatLabel.setAlignment(Qt.AlignRight)
         formatGroup = QGroupBox('Select One:')
         formatGroup.setWhatsThis('This is where you select one of the three formats in which the image can be saved.')
-        formatGroup.setMinimumWidth(200)
+        #formatGroup.setMinimumWidth(200)
         jpgButton = QRadioButton('.jpg')
         jpgButton.clicked.connect(self.setImageFormat)
         pngButton = QRadioButton('.png')
@@ -107,6 +107,8 @@ class Settings(QDialog):
         fileWidgetLayout.addLayout(formatLayout)
         fileWidgetLayout.addStretch(0)
 
+        # Appearance Tab
+
         appearanceSettingsWidget = QWidget()
         appearanceWidgetLayout = QVBoxLayout(appearanceSettingsWidget)
         settingsWidget.addTab(appearanceSettingsWidget, 'Border/Titles')
@@ -117,12 +119,16 @@ class Settings(QDialog):
         borderGroup = QGroupBox('Select One:')
         borderGroup.setWhatsThis('Allows you to decide whether to have a border and whether it is to be a' +
                                  'single or double-line border.')
-        noneButton = QRadioButton('No Border')
+        noneButton = QRadioButton('None')
         noneButton.clicked.connect(self.setBorder)
-        singleButton = QRadioButton('Single Border')
+        singleButton = QRadioButton('Single')
         singleButton.clicked.connect(self.setBorder)
-        doubleButton = QRadioButton('Double Border')
+        doubleButton = QRadioButton('Double')
         doubleButton.clicked.connect(self.setBorder)
+        borderGroupLayout = QHBoxLayout()
+        borderGroupLayout.addWidget(noneButton)
+        borderGroupLayout.addWidget(singleButton)
+        borderGroupLayout.addWidget(doubleButton)
         borderStyle = self.main.config['border']
         if borderStyle == 'none':
             noneButton.setChecked(True)
@@ -130,15 +136,26 @@ class Settings(QDialog):
             singleButton.setChecked(True)
         else:
             doubleButton.setChecked(True)
-        borderGroupLayout = QHBoxLayout()
-        borderGroupLayout.addWidget(noneButton)
-        borderGroupLayout.addWidget(singleButton)
-        borderGroupLayout.addWidget(doubleButton)
         borderGroup.setLayout(borderGroupLayout)
         borderLayout = QHBoxLayout()
         borderLayout.addWidget(borderLabel, 1)
         borderLayout.addWidget(borderGroup, 4)
         appearanceWidgetLayout.addLayout(borderLayout)
+
+        headingPrefixLabel = QLabel('Heading Line 1:')
+        headingPrefixLabel.setAlignment(Qt.AlignRight)
+        self.headingPrefixEdit = QLineEdit()
+        self.headingPrefixEdit.setWhatsThis('Here you can rewrite the initial line of the heading. You may, for instance' +
+                                            'want to include the name of the parish.')
+        self.headingPrefixEdit.setAlignment(Qt.AlignLeft)
+        self.headingPrefixEdit.setText(config['heading_prefix'])
+        self.headingPrefixEdit.editingFinished.connect(self.prefixEdit)
+        prefixLayout = QHBoxLayout()
+        prefixLayout.addWidget(headingPrefixLabel, 1)
+        prefixLayout.addWidget(self.headingPrefixEdit, 4)
+        appearanceWidgetLayout.addLayout(prefixLayout)
+
+
         appearanceWidgetLayout.addSpacing(0)
 
 
@@ -214,16 +231,20 @@ class Settings(QDialog):
     @pyqtSlot()
     def setBorder(self):
         setting = self.sender().text()
-        if setting == 'No Border':
+        if setting == 'None':
             self.main.config['border'] = 'none'
-        elif setting == 'Single Border':
+        elif setting == 'Single':
             self.main.config['border'] = 'single'
         else:
             self.main.config['border'] = 'double'
         self.main.config_changed = True
         self.image_changed = True
 
-
+    def prefixEdit(self):
+        heading_prefix = self.headingPrefixEdit.text()
+        self.main.config['heading_prefix'] = heading_prefix
+        self.main.config_changed = True
+        self.image_changed = True
 
 
 
