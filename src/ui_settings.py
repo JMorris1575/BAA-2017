@@ -230,15 +230,18 @@ class Settings(QDialog):
         horizontalButton.clicked.connect(self.setType)
         verticalButton = QRadioButton('Vertical')
         verticalButton.clicked.connect(self.setType)
-        guageButton = QRadioButton('Guage')
+        meterButton = QRadioButton('Meters')
+        meterButton.clicked.connect(self.setType)
+        guageButton = QRadioButton('Guages')
         guageButton.clicked.connect(self.setType)
         guageButton.setEnabled(False)
-        pieButton = QRadioButton('Pie')
+        pieButton = QRadioButton('Pies')
         pieButton.clicked.connect(self.setType)
         pieButton.setEnabled(False)
         typeGroupLayout = QVBoxLayout()
         typeGroupLayout.addWidget(horizontalButton)
         typeGroupLayout.addWidget(verticalButton)
+        typeGroupLayout.addWidget((meterButton))
         typeGroupLayout.addWidget(guageButton)
         typeGroupLayout.addWidget(pieButton)
         typeGroup.setLayout(typeGroupLayout)
@@ -255,7 +258,6 @@ class Settings(QDialog):
         typeLayout.addWidget(typeLabel, 1)
         typeLayout.addWidget(typeGroup, 4)
         styleWidgetLayout.addLayout(typeLayout)
-
 
         styleWidgetLayout.addStretch(0)
 

@@ -3,7 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import helperFunctions
-import HIndicators, VIndicators
+import HIndicators, VIndicators, MIndicators
 
 def drawWelcome(main):
     """
@@ -104,9 +104,9 @@ def drawGraphic(main):
     elif currentStyle == '3DVertical':
         VIndicators.verticalIndicators(main, painter, '3D', verticalPosition)
     elif currentStyle == '2DMeters':
-        main.meterIndicators(painter, verticalPosition)
+        MIndicators.meterIndicators(main, painter, '2D', verticalPosition)
     elif currentStyle == '3DMeters':
-        main.meterIndicators(painter, verticalPosition)
+        MIndicators.meterIndicators(main, painter, '3D', verticalPosition)
     elif currentStyle == '2DGuages':
         main.guageIndicators(painter, verticalPosition)
     elif currentStyle == '3DGuages':

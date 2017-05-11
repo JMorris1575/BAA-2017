@@ -54,7 +54,7 @@ def verticalIndicators(main, painter, style, verticalPosition):
 
 def drawVerticalIndicator(main, painter, style, color, caption, percent, startX, startY, width, height):
     """
-    Draws the current horizontal indicator with the given parameters
+    Draws the current vertical indicator (a thermometer) with the given parameters
     :param painter: the painter being used to draw
     :param style: a string: '2D' or '3D'
     :param color: currently a string 'red', 'green', 'blue' or 'gray' indicating the color of the indicator
@@ -65,8 +65,7 @@ def drawVerticalIndicator(main, painter, style, color, caption, percent, startX,
     :param height: an integer indicating the height for the indicator and caption
     :return: None
     """
-    # startX = (self.image.width() - width) / 2
-    # #        startX = self.image.width() / 10        # the horizontal starting point of the central rectangle
+
     painter.setFont(main.fonts['smallCaptionFont'])
     fontMetrics = painter.fontMetrics()
     captionHeight = fontMetrics.boundingRect(QRect(0, 0, 640, 480),  # text should fit easily within this QRect

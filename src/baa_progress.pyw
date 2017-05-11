@@ -315,8 +315,6 @@ class MainWindow(QMainWindow, BAA_Setup):
             if f is not None:
                 f.close()
 
-
-
     def meterIndicators(self, painter, verticalPosition):
         print('Got to meterIndicators')
 
