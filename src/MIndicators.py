@@ -83,50 +83,19 @@ def drawMeterIndicator(main, painter, style, color, caption, percent, startX, st
     needleAngle = 135 - 90 * percent/100
     needleEndpoint = helperFunctions.getPointPolar(pivotPoint, needleLength, needleAngle)
 
-    # Draw Meter
-    painter.setPen(main.pens['border_pen'])
-    painter.drawRoundedRect(startX, meterTop, width, indicatorHeight, 15.0, 15.0)
-    painter.setBrush(main.fills['black_brush'])
-    painter.drawRoundedRect(startX, meterBaseTop, width, indicatorHeight * 0.3, 15.0, 15.0)
-    painter.drawRect(startX, meterBaseTop, width, 15)
-    painter.drawEllipse(pivotPoint.x()-20, pivotPoint.y()-20, 40, 40)
-    painter.setBrush(main.fills['white_brush'])
-    painter.setPen(main.pens['outline_pen'])
-    for displayPercent in [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
-        angle = 135 - 90 * displayPercent/100
-        p1 = helperFunctions.getPointPolar(pivotPoint, needleLength, angle)
-        p2 = helperFunctions.getPointPolar(pivotPoint, needleLength + 10, angle)
-        painter.drawLine(p1, p2)
-
-    painter.drawLine(pivotPoint, needleEndpoint)
-
-
-
-    # Draw caption
-    captionTop = startY + indicatorHeight + captionHeight/2
-    captionRect = QRectF(startX, captionTop, width, captionHeight)
-    drawRect = painter.boundingRect(captionRect, Qt.AlignCenter, caption)
-    painter.drawText(drawRect, Qt.AlignCenter, caption)
-
-
-
-    # mercury_length = percent * (tube_length) / 100
-    # tubeRectF = QRectF(tube_left, tube_top + tube_length - mercury_length, radius, mercury_length)
-    # capRectF = QRectF(tube_left, tube_top - radius / 2, radius, radius)
-    #
-    # if style == '2D':
-    #     if color == 'red':
-    #         bulbBrush = main.fills['darkRed_brush']
-    #         mercuryBrush = main.fills['red_brush']
-    #     elif color == 'green':
-    #         bulbBrush = main.fills['darkGreen_brush']
-    #         mercuryBrush = main.fills['green_brush']
-    #     elif color == 'blue':
-    #         bulbBrush = main.fills['darkBlue_brush']
-    #         mercuryBrush = main.fills['blue_brush']
-    #     else:
-    #         bulbBrush = main.fills['darkGray_brush']
-    #         mercuryBrush = main.fills['gray_brush']
+    if style == '2D':
+        if color == 'red':
+            meterPen = main.pens['red_pen']
+            meterBrush = main.fills['red_brush']
+        elif color == 'green':
+            meterPen = main.pens['green_pen']
+            meterBrush = main.fills['green_brush']
+        elif color == 'blue':
+            meterPen = main.pens['blue_pen']
+            meterBrush = main.fills['blue_brush']
+        else:
+            bulbBrush = main.fills['darkGray_brush']
+            mercuryBrush = main.fills['gray_brush']
     # elif style == '3D':
     #     if color == 'red':
     #         bulbGradient = main.fills['red_radial_gradient']
@@ -153,32 +122,38 @@ def drawMeterIndicator(main, painter, style, color, caption, percent, startX, st
     #     mercuryBrush.setStart(tube_left, tube_top)
     #     mercuryBrush.setFinalStop(tube_right, tube_top)
     #
-    # # draw the indicator
-    #
-    # # first draw the bulb
-    # painter.setPen(main.pens['no_pen'])
-    # painter.setBrush(bulbBrush)
-    # painter.drawChord(bulbRectF, 60 * 16, -300 * 16)
-    #
-    # # now draw the tube
-    # painter.setBrush(mercuryBrush)
-    # painter.drawRect(tubeRectF)
-    #
-    # # finally draw the cap if percent is 100 or more
-    # if percent >= 100:
-    #     painter.setBrush(capBrush)
-    #     painter.drawChord(capRectF, 0, 180 * 16)
-    #
-    # # draw the outline
-    # painter.setPen(main.pens['outline_pen'])
-    # painter.drawArc(bulbRectF, 60 * 16, -300 * 16)
-    # painter.drawLine(tube_left, tube_top, tube_left, tube_bottom)
-    # painter.drawLine(tube_right, tube_top, tube_right, tube_bottom)
-    # painter.drawArc(capRectF, 0, 180 * 16)
-    #
-    # # draw the caption
-    # captionTop = startY + indicatorHeight
-    # painter.setPen(main.pens['border_pen'])
-    # captionRect = QRectF(startX, captionTop, width, captionHeight)
-    # drawRect = painter.boundingRect(captionRect, Qt.AlignCenter, caption)
-    # painter.drawText(drawRect, Qt.AlignCenter, caption)
+
+    # Draw Meter
+    painter.setPen(main.pens['outline_pen'])
+    for displayPercent in [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
+        angle = 135 - 90 * displayPercent/100
+        p1 = helperFunctions.getPointPolar(pivotPoint, needleLength + 2, angle)
+        p2 = helperFunctions.getPointPolar(pivotPoint, needleLength + 10, angle)
+        painter.drawLine(p1, p2)
+        if displayPercent in [0, 50, 100]:
+            painter.setFont(main.fonts['smallCaptionFont'])
+            fontMetrics = painter.fontMetrics()
+            fontRect = fontMetrics.boundingRect(QRect(0, 0, 100, 100), Qt.AlignCenter, str(displayPercent))
+            numWidth = fontRect.width()
+            numHeight = fontRect.height()
+            offset = (50 - displayPercent) / 6
+            numRect = QRect(p1.x() + offset - numWidth/2, p1.y(), numWidth, numHeight)
+            drawRect = painter.boundingRect(numRect, Qt.AlignCenter, str(displayPercent))
+            painter.drawText(drawRect, Qt.AlignCenter, str(displayPercent))
+    painter.drawLine(pivotPoint, needleEndpoint)
+    painter.setPen(meterPen)
+    painter.setBrush(meterBrush)
+    painter.drawRoundedRect(startX, meterBaseTop, width, indicatorHeight * 0.3, 15.0, 15.0)
+    painter.drawRect(startX, meterBaseTop, width, 15)
+    painter.setPen(main.pens['outline_pen'])
+    painter.drawLine(startX, meterBaseTop, startX + width, meterBaseTop)
+    painter.drawEllipse(pivotPoint.x()-20, pivotPoint.y()-20, 40, 40)
+    painter.setPen(main.pens['border_pen'])
+    painter.setBrush(main.fills['no_brush'])
+    painter.drawRoundedRect(startX, meterTop, width, indicatorHeight, 15.0, 15.0)
+
+    # Draw caption
+    captionTop = startY + indicatorHeight + captionHeight/2
+    captionRect = QRectF(startX, captionTop, width, captionHeight)
+    drawRect = painter.boundingRect(captionRect, Qt.AlignCenter, caption)
+    painter.drawText(drawRect, Qt.AlignCenter, caption)

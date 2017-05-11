@@ -130,6 +130,12 @@ class MainWindow(QMainWindow, BAA_Setup):
                                         'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
         penDefinitions['outline_pen'] = {'color':QColor(Qt.black), 'width':1, 'style':Qt.SolidLine,
                                          'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
+        penDefinitions['red_pen'] = {'color':QColor(Qt.red), 'width':2, 'style':Qt.SolidLine,
+                                     'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
+        penDefinitions['green_pen'] = {'color':QColor(Qt.green), 'width':2, 'style':Qt.SolidLine,
+                                     'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
+        penDefinitions['blue_pen'] = {'color':QColor(Qt.blue), 'width':2, 'style':Qt.SolidLine,
+                                     'cap':Qt.RoundCap, 'join':Qt.RoundJoin}
         return penDefinitions
 
     def createPens(self, defs):
@@ -159,6 +165,7 @@ class MainWindow(QMainWindow, BAA_Setup):
         :return: a dictionary with keys for the definitions of the different brushes used in the program
         """
         fillDefinitions = {}
+        fillDefinitions['no_brush'] = {'style': Qt.NoBrush, 'color': QColor(Qt.black)}
         fillDefinitions['white_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.white)}
         fillDefinitions['black_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.black)}
         fillDefinitions['gray_brush'] = {'style': Qt.SolidPattern, 'color': QColor(Qt.gray)}
@@ -233,7 +240,9 @@ class MainWindow(QMainWindow, BAA_Setup):
                 new_fill = gradient
 
             else:
+                new_fill = QBrush()
                 new_fill.setStyle(Qt.NoBrush)
+                new_fill.setColor(Qt.black)
 
             fills[fillKey] = new_fill
 
