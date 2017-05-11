@@ -48,20 +48,20 @@ def testForNumbers(nString, numType):
         validNumber = False
     return validNumber
 
-def getIndicatorInfo(self):
+def getIndicatorInfo(main):
     """
     Computes several values that are used in all of the images defined above
     :return: A tuple of tuples, the first containing value strings, possibly converted to monetary format
             the second containing percent values rounded off to one decimal place,
             the third the modifier strings that may be needed if the amounts are near or over 100%
     """
-    goal = float(self.config['targets']['goal'])
-    pledged = float(self.config['current']['pledged'])
-    pledgedString = helperFunctions.decimalFormat(pledged, 'dollars')
-    collected = float(self.config['current']['collected'])
-    collectedString = helperFunctions.decimalFormat(collected, 'dollars')
-    totalFamilies = self.config['targets']['families']
-    participatingFamilies = self.config['current']['families']
+    goal = float(main.config['targets']['goal'])
+    pledged = float(main.config['current']['pledged'])
+    pledgedString = decimalFormat(pledged, 'dollars')
+    collected = float(main.config['current']['collected'])
+    collectedString = decimalFormat(collected, 'dollars')
+    totalFamilies = main.config['targets']['families']
+    participatingFamilies = main.config['current']['families']
     familiesString = str(participatingFamilies) + ' of ' + str(totalFamilies)
     pledgePercent = int(pledged * 1000/goal + 0.5)/10
     collectedPercent = int(collected * 1000/goal + 0.5)/10

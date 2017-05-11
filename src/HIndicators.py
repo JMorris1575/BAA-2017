@@ -17,7 +17,7 @@ def horizontalIndicators(main, painter, style, verticalPosition):
     drawingWidth = (main.image.width() - 2 * gap)  # gives a margin on each side equal to the gap
     drawingHeight = (main.image.height() - verticalPosition - 3 * gap) / 3
 
-    values, percents, modifiers = helperFunctions.getIndicatorInfo()
+    values, percents, modifiers = helperFunctions.getIndicatorInfo(main)
     pledgedString, collectedString, familiesString = values
     pledgePercent, collectedPercent, familiesPercent = percents
     pledgeModifier, collectedModifier, familiesModifier = modifiers

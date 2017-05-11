@@ -17,7 +17,7 @@ def verticalIndicators(main, painter, style, verticalPosition):
     drawingWidth = (main.image.width() - 4 * gap) / 3  # since total image width = three images and four gaps
     drawingHeight = (main.image.height() - verticalPosition) - gap / 2  # saves a little space at the bottom too
 
-    values, percents, modifiers = helperFunctions.getIndicatorInfo()
+    values, percents, modifiers = helperFunctions.getIndicatorInfo(main)
     pledgedString, collectedString, familiesString = values
     pledgePercent, collectedPercent, familiesPercent = percents
     pledgeModifier, collectedModifier, familiesModifier = modifiers
