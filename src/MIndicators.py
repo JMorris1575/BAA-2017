@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 import helperFunctions
 
 
+
 def meterIndicators(main, painter, style, verticalPosition):
     """
     Draws all three meter indicators in horizontal order: pledged, collected and families participating from
@@ -66,27 +67,49 @@ def drawMeterIndicator(main, painter, style, color, caption, percent, startX, st
     :return: None
     """
 
+    # Calculate drawing parameters
     painter.setFont(main.fonts['captionFont'])
     fontMetrics = painter.fontMetrics()
     captionHeight = fontMetrics.boundingRect(QRect(0, 0, 640, 480),  # text should fit easily within this QRect
                                               Qt.AlignHCenter,
                                               'M\nM\nM').height() + 10  # allows for 4-line families caption + 10 px
-    indicatorHeight = height - captionHeight
-    # Temporary section
-    painter.setPen(main.pens['border_pen'])
-    painter.drawRoundedRect(startX, startY + 30, width, height - captionHeight - 30, 15.0, 15.0)
-    # End of temporary section
+    indicatorHeight = height - 2 * captionHeight
+    meterTop = startY + captionHeight / 2
+    pivotPoint = QPoint(startX + width / 2, meterTop + indicatorHeight * 0.7 + 10)
+    meterBaseTop = pivotPoint.y() - 10
+    if percent > 100:
+        percent = 100
+    needleLength = pivotPoint.y() - meterTop - 30
+    needleAngle = 135 - 90 * percent/100
+    needleEndpoint = helperFunctions.getPointPolar(pivotPoint, needleLength, needleAngle)
 
-    # radius = indicatorHeight / 10
-    # bulb_center = QPointF(startX + width / 2, startY + indicatorHeight - radius)
-    # tube_left = startX + (width - radius) / 2
-    # tube_right = tube_left + radius  # since bulb ends at 90 +/- 30 we have 30 - 60 - 90 triangle
-    # tube_top = startY + radius / 2  # tube is one radius in width
-    # tube_bottom = tube_top + indicatorHeight - 1.5 * radius - radius * 1.732 / 2  # allow for top cap too
-    # tube_length = tube_bottom - tube_top
-    # bulbRectF = QRectF(tube_left - radius / 2, startY + indicatorHeight - 2 * radius, 2 * radius, 2 * radius)
-    # if percent > 100:
-    #     percent = 100
+    # Draw Meter
+    painter.setPen(main.pens['border_pen'])
+    painter.drawRoundedRect(startX, meterTop, width, indicatorHeight, 15.0, 15.0)
+    painter.setBrush(main.fills['black_brush'])
+    painter.drawRoundedRect(startX, meterBaseTop, width, indicatorHeight * 0.3, 15.0, 15.0)
+    painter.drawRect(startX, meterBaseTop, width, 15)
+    painter.drawEllipse(pivotPoint.x()-20, pivotPoint.y()-20, 40, 40)
+    painter.setBrush(main.fills['white_brush'])
+    painter.setPen(main.pens['outline_pen'])
+    for displayPercent in [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
+        angle = 135 - 90 * displayPercent/100
+        p1 = helperFunctions.getPointPolar(pivotPoint, needleLength, angle)
+        p2 = helperFunctions.getPointPolar(pivotPoint, needleLength + 10, angle)
+        painter.drawLine(p1, p2)
+
+    painter.drawLine(pivotPoint, needleEndpoint)
+
+
+
+    # Draw caption
+    captionTop = startY + indicatorHeight + captionHeight/2
+    captionRect = QRectF(startX, captionTop, width, captionHeight)
+    drawRect = painter.boundingRect(captionRect, Qt.AlignCenter, caption)
+    painter.drawText(drawRect, Qt.AlignCenter, caption)
+
+
+
     # mercury_length = percent * (tube_length) / 100
     # tubeRectF = QRectF(tube_left, tube_top + tube_length - mercury_length, radius, mercury_length)
     # capRectF = QRectF(tube_left, tube_top - radius / 2, radius, radius)

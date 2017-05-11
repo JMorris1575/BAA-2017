@@ -1,4 +1,6 @@
-# Module Level Functions-------------------------------------------------------
+from PyQt5.QtCore import *
+
+import math
 
 def decimalFormat(n, mode=None):
     ns = '{0:.2f}'.format(round(n*1.0, 2)) # ns = string rounded to 2 decimals
@@ -87,3 +89,13 @@ def getIndicatorInfo(main):
              (pledgeModifier, collectedModifier, familiesModifier) # modifiers
            )
 
+def getPointPolar(center, length, angle):
+    """
+    Uses trigonometry to calculate a point given a center point and polar coordinates to the desired point
+    :param center: QPoint
+    :param length: integer or float
+    :param angle: integer or float in degrees
+    :return: a Qpoint with the desired x and y coordinates
+    """
+    return QPoint(center.x() + length * math.cos(math.radians(angle)),
+                  center.y() - length * math.sin(math.radians(angle)))
