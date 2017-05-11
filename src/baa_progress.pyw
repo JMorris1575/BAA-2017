@@ -345,7 +345,6 @@ class MainWindow(QMainWindow, BAA_Setup):
         self.drawingBoard.setPixmap(QPixmap.fromImage(self.image))
 
     def drawGraphic(self):
-        # ToDo: make sure graphic gets save whenever it is changed
         """
         Draws the graphic according to the current data and current settings.
         This method only creates the painter and draws the border, if any, the

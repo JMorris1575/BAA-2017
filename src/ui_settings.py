@@ -217,6 +217,44 @@ class Settings(QDialog):
             flatButton.setChecked(True)
         else:
             solidButton.setChecked(True)
+        styleLayout = QHBoxLayout()
+        styleLayout.addWidget(styleLabel, 1)
+        styleLayout.addWidget(styleGroup, 4)
+        styleWidgetLayout.addLayout(styleLayout)
+
+        typeLabel = QLabel('Type:')
+        typeLabel.setAlignment(Qt.AlignRight)
+        typeGroup = QGroupBox('Select One:')
+        typeGroup.setWhatsThis('Lets you select the type of indicator to be displayed.')
+        horizontalButton = QRadioButton('Horizontal')
+        horizontalButton.clicked.connect(self.setType)
+        verticalButton = QRadioButton('Vertical')
+        verticalButton.clicked.connect(self.setType)
+        guageButton = QRadioButton('Guage')
+        guageButton.clicked.connect(self.setType)
+        guageButton.setEnabled(False)
+        pieButton = QRadioButton('Pie')
+        pieButton.clicked.connect(self.setType)
+        pieButton.setEnabled(False)
+        typeGroupLayout = QVBoxLayout()
+        typeGroupLayout.addWidget(horizontalButton)
+        typeGroupLayout.addWidget(verticalButton)
+        typeGroupLayout.addWidget(guageButton)
+        typeGroupLayout.addWidget(pieButton)
+        typeGroup.setLayout(typeGroupLayout)
+        type = self.main.config['style'][2:]
+        if type == 'Horizontal':
+            horizontalButton.setChecked(True)
+        elif type == 'Vertical':
+            verticalButton.setChecked(True)
+        elif type == 'Guage':
+            guageButton.setChecked(True)
+        else:
+            pieButton.setChecked(True)
+        typeLayout = QHBoxLayout()
+        typeLayout.addWidget(typeLabel, 1)
+        typeLayout.addWidget(typeGroup, 4)
+        styleWidgetLayout.addLayout(typeLayout)
 
 
         styleWidgetLayout.addStretch(0)
@@ -313,5 +351,23 @@ class Settings(QDialog):
             self.main.config['displayColor'] = True
         else:
             self.main.config['displayColor'] = False
+        self.main.config_changed = True
+        self.image_changed = True
+
+    @pyqtSlot()
+    def setStyle(self):
+        if self.sender().text() == 'Flat':
+            style = '2D'
+        else:
+            style = '3D'
+        type = self.main.config['style'][2:]
+        self.main.config['style'] = style + type
+        self.main.config_changed = True
+        self.image_changed = True
+
+    @pyqtSlot()
+    def setType(self):
+        style = self.main.config['style'][0:2]
+        self.main.config['style'] = style + self.sender().text()
         self.main.config_changed = True
         self.image_changed = True
