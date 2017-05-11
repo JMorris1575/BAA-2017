@@ -48,4 +48,42 @@ def testForNumbers(nString, numType):
         validNumber = False
     return validNumber
 
-# End of Module Level Functions------------------------------------------------
+def getIndicatorInfo(self):
+    """
+    Computes several values that are used in all of the images defined above
+    :return: A tuple of tuples, the first containing value strings, possibly converted to monetary format
+            the second containing percent values rounded off to one decimal place,
+            the third the modifier strings that may be needed if the amounts are near or over 100%
+    """
+    goal = float(self.config['targets']['goal'])
+    pledged = float(self.config['current']['pledged'])
+    pledgedString = helperFunctions.decimalFormat(pledged, 'dollars')
+    collected = float(self.config['current']['collected'])
+    collectedString = helperFunctions.decimalFormat(collected, 'dollars')
+    totalFamilies = self.config['targets']['families']
+    participatingFamilies = self.config['current']['families']
+    familiesString = str(participatingFamilies) + ' of ' + str(totalFamilies)
+    pledgePercent = int(pledged * 1000/goal + 0.5)/10
+    collectedPercent = int(collected * 1000/goal + 0.5)/10
+    familiesPercent = int(participatingFamilies * 1000/totalFamilies + 0.5)/10
+
+    pledgeModifier = ''
+    if pledgePercent == 100.0:
+        if pledged < goal: pledgeModifier = 'almost '
+        if pledged > goal: pledgeModifier = 'over '
+
+    collectedModifier = ''
+    if collectedPercent == 100.0:
+        if collected < goal: collectedModifier = 'almost '
+        if collected > goal: collectedModifier = 'over '
+
+    familiesModifier = ''
+    if familiesPercent == 100.0:
+        if participatingFamilies < totalFamilies: familiesModifier = 'almost '
+        if participatingFamilies > totalFamilies: familiesModifier =  'over '
+
+    return ( (pledgedString, collectedString, familiesString), # value strings
+             (pledgePercent, collectedPercent, familiesPercent), # percents
+             (pledgeModifier, collectedModifier, familiesModifier) # modifiers
+           )
+

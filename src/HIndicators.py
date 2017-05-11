@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import *
 import helperFunctions
 
 
-def horizontalIndicators(caller, painter, style, verticalPosition):
+def horizontalIndicators(main, painter, style, verticalPosition):
     """
     Draws all three horizontal indicators in vertical order: pledged, collected and families participating from top
     to bottom according to the style selected in 'style'
@@ -14,10 +14,10 @@ def horizontalIndicators(caller, painter, style, verticalPosition):
     """
     gap = 35  # vertical spacing increment
     verticalPosition += gap
-    drawingWidth = (caller.image.width() - 2 * gap)  # gives a margin on each side equal to the gap
-    drawingHeight = (caller.image.height() - verticalPosition - 3 * gap) / 3
+    drawingWidth = (main.image.width() - 2 * gap)  # gives a margin on each side equal to the gap
+    drawingHeight = (main.image.height() - verticalPosition - 3 * gap) / 3
 
-    values, percents, modifiers = caller.getIndicatorInfo()
+    values, percents, modifiers = helperFunctions.getIndicatorInfo()
     pledgedString, collectedString, familiesString = values
     pledgePercent, collectedPercent, familiesPercent = percents
     pledgeModifier, collectedModifier, familiesModifier = modifiers
@@ -26,28 +26,28 @@ def horizontalIndicators(caller, painter, style, verticalPosition):
     familiesCaption = 'Participating Families: ' + familiesString + ' = ' + \
                       familiesModifier + str(familiesPercent) + '%'
 
-    if caller.config['displayColor']:
-        drawHorizontalIndicator(caller, painter, style, 'red', pledgeCaption, pledgePercent,
-                                     verticalPosition, drawingWidth, drawingHeight)
+    if main.config['displayColor']:
+        drawHorizontalIndicator(main, painter, style, 'red', pledgeCaption, pledgePercent,
+                                verticalPosition, drawingWidth, drawingHeight)
         verticalPosition += drawingHeight + gap
 
-        drawHorizontalIndicator(caller, painter, style, 'green', collectedCaption, collectedPercent,
-                                     verticalPosition, drawingWidth, drawingHeight)
+        drawHorizontalIndicator(main, painter, style, 'green', collectedCaption, collectedPercent,
+                                verticalPosition, drawingWidth, drawingHeight)
         verticalPosition += drawingHeight + gap
 
-        drawHorizontalIndicator(caller, painter, style, 'blue', familiesCaption, familiesPercent,
-                                     verticalPosition, drawingWidth, drawingHeight)
+        drawHorizontalIndicator(main, painter, style, 'blue', familiesCaption, familiesPercent,
+                                verticalPosition, drawingWidth, drawingHeight)
     else:
-        drawHorizontalIndicator(caller, painter, style, 'gray', pledgeCaption, pledgePercent,
-                                     verticalPosition, drawingWidth, drawingHeight)
+        drawHorizontalIndicator(main, painter, style, 'gray', pledgeCaption, pledgePercent,
+                                verticalPosition, drawingWidth, drawingHeight)
         verticalPosition += drawingHeight + gap
 
-        drawHorizontalIndicator(caller, painter, style, 'gray', collectedCaption, collectedPercent,
-                                     verticalPosition, drawingWidth, drawingHeight)
+        drawHorizontalIndicator(main, painter, style, 'gray', collectedCaption, collectedPercent,
+                                verticalPosition, drawingWidth, drawingHeight)
         verticalPosition += drawingHeight + gap
 
-        drawHorizontalIndicator(caller, painter, style, 'gray', familiesCaption, familiesPercent,
-                                     verticalPosition, drawingWidth, drawingHeight)
+        drawHorizontalIndicator(main, painter, style, 'gray', familiesCaption, familiesPercent,
+                                verticalPosition, drawingWidth, drawingHeight)
 
 
 def drawHorizontalIndicator(caller, painter, style, color, caption, percent, startY, width, height):
