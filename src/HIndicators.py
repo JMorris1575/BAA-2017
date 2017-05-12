@@ -76,9 +76,22 @@ def drawHorizontalIndicator(caller, painter, style, color, caption, percent, sta
     captionRect = QRectF(startX, startY + 2 * radius + 10, endX - startX, fontMetrics.height())
 
     if style == '2D':
-        brush1 = caller.fills['black_brush']
-        brush2 = caller.fills['black_brush']
-        brush3 = caller.fills['gray_brush']
+        if color == 'red':
+            brush1 = caller.fills['darkRed_brush']
+            brush2 = caller.fills['darkRed_brush']
+            brush3 = caller.fills['red_brush']
+        elif color == 'green':
+            brush1 = caller.fills['darkGreen_brush']
+            brush2 = caller.fills['darkGreen_brush']
+            brush3 = caller.fills['green_brush']
+        elif color == 'blue':
+            brush1 = caller.fills['darkBlue_brush']
+            brush2 = caller.fills['darkBlue_brush']
+            brush3 = caller.fills['blue_brush']
+        else:
+            brush1 = caller.fills['black_brush']
+            brush2 = caller.fills['black_brush']
+            brush3 = caller.fills['gray_brush']
 
     elif style == '3D':
         if color == 'red':

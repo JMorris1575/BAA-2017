@@ -1,15 +1,13 @@
 Introduction
 ============
 
+**These help pages need help! They are not up to date. I will fix them when I can.**
+
 .. |target| image:: ../src/images/icons/Target.png
     :width: 20
     :height: 20
 
 .. |save| image:: ../src/images/icons/Save.png
-    :width: 20
-    :height: 20
-
-.. |saveas| image:: ../src/images/icons/SaveAs.png
     :width: 20
     :height: 20
 
