@@ -49,7 +49,7 @@ Saving the Graphic
 When you are finished entering the current data click on the ``File`` menu and select ``Save Graphic`` to save the
 graphic in the default location (initially the ``graphics`` directory in the same directory as the BAA Progress program)
 with the default name (initially ``BAA_Progress_Graphic.jpg``), or ``Save Graphic As...`` to choose the location and
-name yourself. You can also use the ``Save Graphic`` |save| or ``Save Graphic As...`` |saveas| icons on the toolbar.
+name yourself. You can also use the ``Save Graphic`` |save| icon on the toolbar.
 You can change the defaults by selecting the ``Settings`` menu and selecting ``Image Options...`` or by clicking the
 ``Image Options`` icon |imageoptions| on the toolbar. The ``Save Graphic As...`` dialog will also give you the option
 of saving your entries as the defaults.
