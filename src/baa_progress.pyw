@@ -303,8 +303,6 @@ class MainWindow(QMainWindow, BAA_Setup):
         """
         config = pickle.load(config_file)
         self.config_changed = False
-        print("Temporary Section -- Configuration just read:")
-        print("config = ", config)
 
         return config
 

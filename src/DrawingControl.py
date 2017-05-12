@@ -58,7 +58,6 @@ def drawGraphic(main):
         painter.setPen(main.pens['border_pen'])
         painter.pen().setWidth(10)
         penWidth = painter.pen().width()
-        print('penWidth = ', penWidth)
         painter.drawRect(1, 1, imageWidth-penWidth-2, imageHeight-penWidth-2)
     if borderStyle == 'double':
         painter.drawRect(4, 4, imageWidth-penWidth - 8, imageHeight - penWidth - 8)
