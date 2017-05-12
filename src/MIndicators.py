@@ -83,45 +83,18 @@ def drawMeterIndicator(main, painter, style, color, caption, percent, startX, st
     needleAngle = 135 - 90 * percent/100
     needleEndpoint = helperFunctions.getPointPolar(pivotPoint, needleLength, needleAngle)
 
-    if style == '2D':
-        if color == 'red':
-            meterPen = main.pens['red_pen']
-            meterBrush = main.fills['red_brush']
-        elif color == 'green':
-            meterPen = main.pens['green_pen']
-            meterBrush = main.fills['green_brush']
-        elif color == 'blue':
-            meterPen = main.pens['blue_pen']
-            meterBrush = main.fills['blue_brush']
-        else:
-            bulbBrush = main.fills['darkGray_brush']
-            mercuryBrush = main.fills['gray_brush']
-    # elif style == '3D':
-    #     if color == 'red':
-    #         bulbGradient = main.fills['red_radial_gradient']
-    #         mercuryGradient = main.fills['red_linear_gradient']
-    #     elif color == 'green':
-    #         bulbGradient = main.fills['green_radial_gradient']
-    #         mercuryGradient = main.fills['green_linear_gradient']
-    #     elif color == 'blue':
-    #         bulbGradient = main.fills['blue_radial_gradient']
-    #         mercuryGradient = main.fills['blue_linear_gradient']
-    #     else:
-    #         bulbGradient = main.fills['gray_radial_gradient']
-    #         mercuryGradient = main.fills['gray_linear_gradient']
-    #
-    #     # set 3D brushes to gradients
-    #     bulbBrush = bulbGradient
-    #     bulbBrush.setCenter(bulb_center.x(), bulb_center.y())
-    #     bulbBrush.setRadius(radius)
-    #     bulbBrush.setFocalPoint(bulb_center.x() - radius / 2, bulb_center.y() - radius / 2)
-    #     capBrush = QRadialGradient(bulbGradient)
-    #     capBrush.setCenter(startX + width / 2, tube_top)
-    #     capBrush.setFocalPoint(startX + width / 2 - 0.17 * radius, tube_top)
-    #     mercuryBrush = mercuryGradient
-    #     mercuryBrush.setStart(tube_left, tube_top)
-    #     mercuryBrush.setFinalStop(tube_right, tube_top)
-    #
+    if color == 'red':
+        meterPen = main.pens['red_pen']
+        meterBrush = main.fills['red_brush']
+    elif color == 'green':
+        meterPen = main.pens['green_pen']
+        meterBrush = main.fills['green_brush']
+    elif color == 'blue':
+        meterPen = main.pens['blue_pen']
+        meterBrush = main.fills['blue_brush']
+    else:
+        bulbBrush = main.fills['darkGray_brush']
+        mercuryBrush = main.fills['gray_brush']
 
     # Draw Meter
     painter.setPen(main.pens['outline_pen'])
@@ -151,6 +124,11 @@ def drawMeterIndicator(main, painter, style, color, caption, percent, startX, st
     painter.setPen(main.pens['border_pen'])
     painter.setBrush(main.fills['no_brush'])
     painter.drawRoundedRect(startX, meterTop, width, indicatorHeight, 15.0, 15.0)
+
+    # Draw 3D meters over the rest of it if selected
+    if style == '3D':
+        meterImage = QImage('./images/blue_meter.png')
+        painter.drawImage(startX, meterTop, meterImage)
 
     # Draw caption
     captionTop = startY + indicatorHeight + captionHeight/2

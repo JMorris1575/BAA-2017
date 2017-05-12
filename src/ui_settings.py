@@ -204,19 +204,19 @@ class Settings(QDialog):
         styleLabel.setAlignment(Qt.AlignRight)
         styleGroup = QGroupBox('Select One:')
         styleGroup.setWhatsThis('Give the indicators either a flat or a three-dimensional appearance.')
-        flatButton = QRadioButton('Flat')
-        flatButton.clicked.connect(self.setStyle)
-        solidButton = QRadioButton('Solid')
-        solidButton.clicked.connect(self.setStyle)
+        self.flatButton = QRadioButton('Flat')
+        self.flatButton.clicked.connect(self.setStyle)
+        self.solidButton = QRadioButton('Solid')
+        self.solidButton.clicked.connect(self.setStyle)
         styleGroupLayout = QHBoxLayout()
-        styleGroupLayout.addWidget(flatButton)
-        styleGroupLayout.addWidget(solidButton)
+        styleGroupLayout.addWidget(self.flatButton)
+        styleGroupLayout.addWidget(self.solidButton)
         styleGroup.setLayout(styleGroupLayout)
         style = self.main.config['style'][0:2]
         if style == '2D':
-            flatButton.setChecked(True)
+            self.flatButton.setChecked(True)
         else:
-            solidButton.setChecked(True)
+            self.solidButton.setChecked(True)
         styleLayout = QHBoxLayout()
         styleLayout.addWidget(styleLabel, 1)
         styleLayout.addWidget(styleGroup, 4)
@@ -248,12 +248,22 @@ class Settings(QDialog):
         type = self.main.config['style'][2:]
         if type == 'Horizontal':
             horizontalButton.setChecked(True)
+            self.solidButton.setEnabled(True)
         elif type == 'Vertical':
             verticalButton.setChecked(True)
-        elif type == 'Guage':
+            self.solidButton.setEnabled(True)
+        elif type == 'Meters':
+            meterButton.setChecked(True)
+            self.flatButton.setChecked(True)         # no 3D meters for now
+            self.solidButton.setEnabled(False)
+        elif type == 'Guages':
             guageButton.setChecked(True)
+            self.flatButton.setChecked(True)         # no 3D guages for now
+            self.solidButton.setEnabled(False)
         else:
             pieButton.setChecked(True)
+            self.flatButton.setChecked(True)         # no 3D pies for now
+            self.solidButton.setEnabled(False)
         typeLayout = QHBoxLayout()
         typeLayout.addWidget(typeLabel, 1)
         typeLayout.addWidget(typeGroup, 4)
@@ -370,6 +380,12 @@ class Settings(QDialog):
     @pyqtSlot()
     def setType(self):
         style = self.main.config['style'][0:2]
-        self.main.config['style'] = style + self.sender().text()
+        type = self.sender().text()
+        self.main.config['style'] = style + type
+        if type == 'Horizontal' or type == 'Vertical':
+            self.solidButton.setEnabled(True)
+        else:
+            self.flatButton.setChecked(True)
+            self.solidButton.setEnabled(False)
         self.main.config_changed = True
         self.image_changed = True
