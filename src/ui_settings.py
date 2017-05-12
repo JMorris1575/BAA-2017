@@ -381,11 +381,12 @@ class Settings(QDialog):
     def setType(self):
         style = self.main.config['style'][0:2]
         type = self.sender().text()
-        self.main.config['style'] = style + type
         if type == 'Horizontal' or type == 'Vertical':
             self.solidButton.setEnabled(True)
         else:
             self.flatButton.setChecked(True)
+            style = '2D'
             self.solidButton.setEnabled(False)
+        self.main.config['style'] = style + type
         self.main.config_changed = True
         self.image_changed = True
