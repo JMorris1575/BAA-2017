@@ -1,7 +1,7 @@
 Introduction
 ============
 
-**These help pages need help! They are not up to date. I will fix them when I can.**
+**These help pages need help quite badly! They are not up to date. I will fix them when I can.**
 
 .. |target| image:: ../src/images/icons/Target.png
     :width: 20

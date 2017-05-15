@@ -406,13 +406,12 @@ class MainWindow(QMainWindow, BAA_Setup):
     def displayHelp(self):
         program = "assistant"
         arguments = ["-collectionFile",
-                     "../docs/_build/qthelp/BAAProgress.qhc",
+                     "./qthelp/BAAProgress.qhc",
                      "-enableRemoteControl", ]
         helpProcess = QProcess(self)
         helpProcess.start(program, arguments)
         if not helpProcess.waitForStarted():
             return False
-        print("About to send a message to helpProcess")
         ba = QByteArray()
         ba.append("setSource introduction.html\n;")
         ba.append("expandToc 1")

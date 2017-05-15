@@ -149,7 +149,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'BAAProgress', 'BAA Progress Documentation',
-     author, 'BAAProgress', 'Create Bulletin Grapics for Parish Progress in the BAA.',
+     author, 'BAAProgress', 'Create Bulletin Graphics for Parish Progress in the BAA.',
      'Miscellaneous'),
 ]
 
